@@ -27,6 +27,9 @@ class DataService:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Fetch data from a Supabase table with optional filters"""
+        if not self.supabase:
+            raise RuntimeError("Supabase client is not configured")
+
         query = self.supabase.table(table_name).select("*")
 
         if filters:
@@ -42,7 +45,118 @@ class DataService:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Get all players with optional filters"""
-        return self._fetch_table_data("players", filters)
+        filters = filters or {}
+
+        players = self._fetch_table_data("players")
+
+        if not filters:
+            return players
+
+        def _to_number(value: Any) -> Optional[float]:
+            if value is None:
+                return None
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                value = value.strip()
+                if not value:
+                    return None
+                value = value.replace(",", "")
+                try:
+                    return float(value)
+                except ValueError:
+                    return None
+            return None
+
+        def _matches_team(player: Dict[str, Any], team_value: Any) -> bool:
+            if team_value in (None, ""):
+                return True
+            team_value = str(team_value).lower()
+            potential_keys = (
+                "team",
+                "team_name",
+                "team_short_name",
+                "team_code",
+                "team_id",
+            )
+            for key in potential_keys:
+                candidate = player.get(key)
+                if candidate is None:
+                    continue
+                if isinstance(candidate, str):
+                    if team_value in candidate.lower():
+                        return True
+                else:
+                    if str(candidate).lower() == team_value:
+                        return True
+            return False
+
+        def _matches_position(player: Dict[str, Any], position_value: Any) -> bool:
+            if position_value in (None, ""):
+                return True
+            position_value = str(position_value).lower()
+            potential_keys = (
+                "position",
+                "position_short",
+                "element_type",
+                "element_type_name",
+            )
+            for key in potential_keys:
+                candidate = player.get(key)
+                if not candidate:
+                    continue
+                if str(candidate).lower() == position_value:
+                    return True
+            return False
+
+        def _matches_gameweek(player: Dict[str, Any], gameweek_value: Optional[int]) -> bool:
+            if gameweek_value is None:
+                return True
+            potential_keys = ("gameweek", "gw", "event")
+            for key in potential_keys:
+                candidate = player.get(key)
+                if candidate is None:
+                    continue
+                try:
+                    if int(candidate) == int(gameweek_value):
+                        return True
+                except (TypeError, ValueError):
+                    if str(candidate).lower() == str(gameweek_value).lower():
+                        return True
+            return False
+
+        min_price = _to_number(filters.get("min_price"))
+        max_price = _to_number(filters.get("max_price"))
+        min_points = _to_number(filters.get("min_points"))
+        max_points = _to_number(filters.get("max_points"))
+        team_filter = filters.get("team")
+        position_filter = filters.get("position")
+        gameweek_filter = filters.get("gameweek")
+
+        filtered_players = []
+        for player in players:
+            if not _matches_position(player, position_filter):
+                continue
+            if not _matches_team(player, team_filter):
+                continue
+            if not _matches_gameweek(player, gameweek_filter):
+                continue
+
+            cost = _to_number(player.get("now_cost"))
+            if min_price is not None and (cost is None or cost < min_price):
+                continue
+            if max_price is not None and (cost is None or cost > max_price):
+                continue
+
+            total_points = _to_number(player.get("total_points"))
+            if min_points is not None and (total_points is None or total_points < min_points):
+                continue
+            if max_points is not None and (total_points is None or total_points > max_points):
+                continue
+
+            filtered_players.append(player)
+
+        return filtered_players
 
     def get_player_by_id(self, player_id: int) -> Optional[Dict[str, Any]]:
         """Get a specific player by ID"""
@@ -63,7 +177,7 @@ class DataService:
         gameweek: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get matches, optionally filtered by gameweek"""
-        filters = {"gameweek": gameweek} if gameweek else None
+        filters = {"gameweek": gameweek} if gameweek is not None else None
         return self._fetch_table_data("matches", filters)
 
     def get_match_by_id(self, match_id: int) -> Optional[Dict[str, Any]]:
@@ -78,9 +192,9 @@ class DataService:
     ) -> List[Dict[str, Any]]:
         """Get player match statistics with optional filters"""
         filters = {}
-        if match_id:
+        if match_id is not None:
             filters["match_id"] = match_id
-        if player_id:
+        if player_id is not None:
             filters["player_id"] = player_id
 
         return self._fetch_table_data("playermatchstats", filters)
