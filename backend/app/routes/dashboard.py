@@ -1,0 +1,96 @@
+from fastapi import APIRouter
+from app.models import DashboardStats
+from app.services.data_service import data_service
+
+router = APIRouter()
+
+
+@router.get("/dashboard/stats", response_model=DashboardStats)
+async def get_dashboard_stats():
+    """Get dashboard statistics"""
+    try:
+        return data_service.get_dashboard_stats()
+    except Exception:
+        # Return mock data for development
+        return {
+            "totalPlayers": 623,
+            "totalTeams": 20,
+            "currentGameweek": 25,
+            "averagePoints": 45.2,
+            "topScorer": {
+                "id": 1,
+                "name": "Erling Haaland",
+                "team": "Manchester City",
+                "position": "Forward",
+                "now_cost": 120,
+                "selected_by_percent": 25.5,
+                "total_points": 156,
+                "minutes": 1800,
+                "goals_scored": 18,
+                "assists": 5,
+                "clean_sheets": 0,
+                "goals_conceded": 0,
+                "own_goals": 0,
+                "penalties_saved": 0,
+                "penalties_missed": 0,
+                "yellow_cards": 2,
+                "red_cards": 0,
+                "saves": 0,
+                "bonus": 15,
+                "bps": 450,
+                "influence": 650.5,
+                "creativity": 120.2,
+                "threat": 890.1,
+                "ict_index": 166.1,
+                "starts": 20,
+                "expected_goals": 15.2,
+                "expected_assists": 3.8,
+                "expected_goal_involvements": 19.0,
+                "expected_goals_conceded": 0.0,
+                "value_season": 13.0,
+                "value_form": 8.5,
+                "points_per_game": 7.8,
+                "transfers_in": 1500000,
+                "transfers_out": 500000,
+                "transfers_in_event": 25000,
+                "transfers_out_event": 15000,
+            },
+            "mostValuable": {
+                "id": 2,
+                "name": "Mohamed Salah",
+                "team": "Liverpool",
+                "position": "Midfielder",
+                "now_cost": 130,
+                "selected_by_percent": 35.2,
+                "total_points": 142,
+                "minutes": 1950,
+                "goals_scored": 12,
+                "assists": 8,
+                "clean_sheets": 0,
+                "goals_conceded": 0,
+                "own_goals": 0,
+                "penalties_saved": 0,
+                "penalties_missed": 0,
+                "yellow_cards": 1,
+                "red_cards": 0,
+                "saves": 0,
+                "bonus": 12,
+                "bps": 380,
+                "influence": 520.3,
+                "creativity": 280.4,
+                "threat": 650.2,
+                "ict_index": 145.1,
+                "starts": 22,
+                "expected_goals": 10.5,
+                "expected_assists": 6.2,
+                "expected_goal_involvements": 16.7,
+                "expected_goals_conceded": 0.0,
+                "value_season": 10.9,
+                "value_form": 7.2,
+                "points_per_game": 6.5,
+                "transfers_in": 2000000,
+                "transfers_out": 300000,
+                "transfers_in_event": 35000,
+                "transfers_out_event": 20000,
+            },
+        }

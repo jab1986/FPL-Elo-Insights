@@ -360,3 +360,18 @@ This table contains information about each team from the FPL API.
 
 
 </details>
+
+## Analytical Convenience Dataset (merged_gw.csv)
+
+A build script now produces a unified per player per gameweek file combining discrete deltas, match context, and Elo ratings.
+
+Quick usage:
+1. Run the export pipeline (updates snapshots & discrete stats):
+    `python scripts/export_data.py`
+2. Build merged analytical table:
+    `python scripts/build_merged_gw.py`
+3. Output: `data/<season>/merged_gw.csv`
+
+Includes columns: player identifiers, position, gameweek, team/opponent IDs, `is_home`, Elo values, result (W/D/L), plus all per-GW delta + snapshot fields from `player_gameweek_stats.csv`.
+
+Detailed SPSS / modeling notes: see `docs/SPSS_Research_Notes.md`.

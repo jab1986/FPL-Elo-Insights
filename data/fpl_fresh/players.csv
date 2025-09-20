@@ -1,0 +1,741 @@
+id_x,first_name,second_name,web_name,team,team_code,position
+1,David,Raya Martín,Raya,1,3,GKP
+2,Kepa,Arrizabalaga Revuelta,Arrizabalaga,1,3,GKP
+3,Karl,Hein,Hein,1,3,GKP
+4,Tommy,Setford,Setford,1,3,GKP
+5,Gabriel,dos Santos Magalhães,Gabriel,1,3,DEF
+6,William,Saliba,Saliba,1,3,DEF
+7,Riccardo,Calafiori,Calafiori,1,3,DEF
+8,Jurriën,Timber,J.Timber,1,3,DEF
+9,Jakub,Kiwior,Kiwior,1,3,DEF
+10,Myles,Lewis-Skelly,Lewis-Skelly,1,3,DEF
+11,Benjamin,White,White,1,3,DEF
+13,Brayden,Clarke,Clarke,1,3,DEF
+14,Maldini,Kacurri,Kacurri,1,3,DEF
+15,Josh,Nichols,Nichols,1,3,DEF
+16,Bukayo,Saka,Saka,1,3,MID
+17,Martin,Ødegaard,Ødegaard,1,3,MID
+18,Noni,Madueke,Madueke,1,3,MID
+19,Gabriel,Martinelli Silva,Martinelli,1,3,MID
+20,Leandro,Trossard,Trossard,1,3,MID
+21,Declan,Rice,Rice,1,3,MID
+22,Mikel,Merino Zazón,Merino,1,3,MID
+23,Fábio,Ferreira Vieira,Fábio Vieira,1,3,MID
+24,Christian,Nørgaard,Nørgaard,1,3,MID
+25,Ethan,Nwaneri,Nwaneri,1,3,MID
+26,Martín,Zubimendi Ibáñez,Zubimendi,1,3,MID
+28,Ismeal,Kabia,Kabia,1,3,MID
+29,Albert,Sambi Lokonga,Sambi,1,3,MID
+30,Kai,Havertz,Havertz,1,3,FWD
+31,Gabriel,Fernando de Jesus,G.Jesus,1,3,FWD
+266,Eberechi,Eze,Eze,1,3,MID
+662,Cristhian,Mosquera,Mosquera,1,3,DEF
+666,Viktor,Gyökeres,Gyökeres,1,3,FWD
+700,Max,Dowman,Dowman,1,3,MID
+711,Andre,Harriman-Annous,Harriman-Annous,1,3,MID
+725,Piero,Hincapié,Hincapie,1,3,DEF
+32,Emiliano,Martínez Romero,Martinez,2,7,GKP
+33,Marco,Bizot,M.Bizot,2,7,GKP
+34,Joe,Gauci,Gauci,2,7,GKP
+35,Filip,Marschall,Marschall,2,7,GKP
+36,Matty,Cash,Cash,2,7,DEF
+37,Lucas,Digne,Digne,2,7,DEF
+38,Ezri,Konsa Ngoyo,Konsa,2,7,DEF
+39,Ian,Maatsen,Maatsen,2,7,DEF
+40,Tyrone,Mings,Mings,2,7,DEF
+41,Pau,Torres,Pau,2,7,DEF
+42,Andrés,García,A.García,2,7,DEF
+43,Álex,Moreno Lopera,Alex Moreno,2,7,DEF
+44,Lamare,Bogarde,Bogarde,2,7,DEF
+45,Lino,da Cruz Sousa,Sousa,2,7,DEF
+46,Yasin,Özcan,Yasin,2,7,DEF
+47,Morgan,Rogers,Rogers,2,7,MID
+48,Youri,Tielemans,Tielemans,2,7,MID
+49,Leon,Bailey,Bailey,2,7,MID
+50,Emiliano,Buendía Stati,Buendía,2,7,MID
+51,Samuel,Iling-Junior,Iling Jr,2,7,MID
+53,Donyell,Malen,Malen,2,7,MID
+54,John,McGinn,McGinn,2,7,MID
+55,Ross,Barkley,Barkley,2,7,MID
+56,Enzo,Barrenechea,Barrenechea,2,7,MID
+57,Lewis,Dobbin,Dobbin,2,7,MID
+58,Boubacar,Kamara,Kamara,2,7,MID
+59,Amadou,Onana,Onana,2,7,MID
+60,Ben,Broggio,Broggio,2,7,MID
+61,Leander,Dendoncker,Dendoncker,2,7,MID
+62,Jamaldeen,Jimoh-Aloba,Jimoh-Aloba,2,7,MID
+63,Kadan,Young,Young,2,7,MID
+64,Ollie,Watkins,Watkins,2,7,FWD
+65,Zépiqueno,Redmond,Redmond,2,7,FWD
+389,Harvey,Elliott,Elliott,2,7,MID
+456,Jadon,Sancho,Sancho,2,7,MID
+677,Evann,Guessand,Guessand,2,7,MID
+688,James,Wright,Wright,2,7,GKP
+701,Triston,Rowe,Rowe,2,7,DEF
+702,Bradley,Burrowes,Burrowes,2,7,MID
+703,Sam,Proctor,Proctor,2,7,GKP
+710,Travis,Patterson,Patterson,2,7,DEF
+719,Victor,Lindelöf,Lindelöf,2,7,DEF
+183,Max,Weiß,Weiss,3,90,GKP
+184,Etienne,Green,Green,3,90,GKP
+185,Václav,Hladký,Hladký,3,90,GKP
+186,Connor,Roberts,Roberts,3,90,DEF
+187,Kyle,Walker,Walker,3,90,DEF
+188,Hannes,Delcroix,Delcroix,3,90,DEF
+189,Owen,Dodgson,Dodgson,3,90,DEF
+190,Hjalmar,Ekdal,Ekdal,3,90,DEF
+191,Maxime,Estève,Estève,3,90,DEF
+192,Quilindschy,Hartman,Hartman,3,90,DEF
+193,Bashir,Humphreys,Humphreys,3,90,DEF
+194,Jordan,Beyer,Jordan,3,90,DEF
+195,Lucas,Pires Silva,Lucas Pires,3,90,DEF
+196,Shurandy,Sambo,Sambo,3,90,DEF
+197,Oliver,Sonne,Sonne,3,90,DEF
+198,Axel,Tuanzebe,Tuanzebe,3,90,DEF
+199,Joe,Worrall,Worrall,3,90,DEF
+200,Jaidon,Anthony,Anthony,3,90,MID
+201,Manuel,Benson Hedilazio,Benson,3,90,MID
+202,Jacob,Bruun Larsen,Bruun Larsen,3,90,MID
+203,Enock,Agyei,Boateng,3,90,MID
+204,Darko,Churlinov,Churlinov,3,90,MID
+205,Josh,Cullen,Cullen,3,90,MID
+206,Marcus,Edwards,Edwards,3,90,MID
+207,Hannibal,Mejbri,Hannibal,3,90,MID
+208,Luca,Koleosho,Koleosho,3,90,MID
+209,Josh,Laurent,Laurent,3,90,MID
+210,Loum,Tchaouna,Tchaouna,3,90,MID
+211,Aaron,Ramsey,A.Ramsey,3,90,MID
+212,Oluwaseun,Adewumi,Adewumi,3,90,MID
+213,Jaydon,Banel,Banel,3,90,MID
+214,Mike,Trésor Ndayishimiye,Trésor,3,90,MID
+215,Zian,Flemming,Flemming,3,90,FWD
+216,Zeki,Amdouni,Amdouni,3,90,FWD
+217,Lyle,Foster,Foster,3,90,FWD
+218,Ashley,Barnes,Barnes,3,90,FWD
+219,Michael,Obafemi,Obafemi,3,90,FWD
+470,Martin,Dúbravka,Dúbravka,3,90,GKP
+676,Lesley,Ugochukwu,Ugochukwu,3,90,MID
+680,Armando,Broja,Broja,3,90,FWD
+722,Florentino Ibrain,Morris Luís,Florentino,3,90,MID
+66,Norberto,Murara Neto,Neto,4,91,GKP
+67,Đorđe,Petrović,Petrović,4,91,GKP
+68,Will,Dennis,Dennis,4,91,GKP
+69,Callan,McKenna,McKenna,4,91,GKP
+70,Alex,Paulsen,Paulsen,4,91,GKP
+71,Illia,Zabarnyi,Zabarnyi,4,91,DEF
+72,Marcos,Senesi Barón,Senesi,4,91,DEF
+73,Adam,Smith,Smith,4,91,DEF
+74,Adrien,Truffert,Truffert,4,91,DEF
+75,Matai,Akinmboni,Akinmboni,4,91,DEF
+76,Owen,Bevan,Bevan,4,91,DEF
+77,James,Hill,Hill,4,91,DEF
+78,Julián,Araujo Zúñiga,J.Araujo,4,91,DEF
+79,Chris,Mepham,Mepham,4,91,DEF
+80,Julio,Soler Barreto,Soler,4,91,DEF
+81,Justin,Kluivert,Kluivert,4,91,MID
+82,Antoine,Semenyo,Semenyo,4,91,MID
+84,Marcus,Tavernier,Tavernier,4,91,MID
+85,Tyler,Adams,Adams,4,91,MID
+86,David,Brooks,Brooks,4,91,MID
+87,Ryan,Christie,Christie,4,91,MID
+88,Lewis,Cook,Cook,4,91,MID
+89,Philip,Billing,Philip,4,91,MID
+90,Alex,Scott,Scott,4,91,MID
+91,Luis,Sinisterra Lucumí,Sinisterra,4,91,MID
+92,Romain,Faivre,Faivre,4,91,MID
+93,Hamed,Traorè,H.Traorè,4,91,MID
+94,Dominic,Sadi,Sadi,4,91,MID
+95,Zain,Silcott-Duberry,Silcott-Duberry,4,91,MID
+96,Ben,Winterburn,Winterburn,4,91,MID
+97,Francisco Evanilson,de Lima Barbosa,Evanilson,4,91,FWD
+98,Enes,Ünal,Enes Ünal,4,91,FWD
+99,Daniel,Adu-Adjei,Adu-Adjei,4,91,FWD
+100,Eli Junior,Kroupi,Kroupi.Jr,4,91,FWD
+391,Ben,Gannon-Doak,Gannon-Doak,4,91,MID
+685,Bafodé,Diakité,Diakité,4,91,DEF
+687,Remy,Rees-Dottin,Rees-Dottin,4,91,MID
+697,Amine,Adli,Adli,4,91,MID
+713,Álex,Jiménez Sánchez,A.Jimenez,4,91,DEF
+721,Veljko,Milosavljevic,Milosavljević,4,91,DEF
+27,Reiss,Nelson,Nelson,5,94,MID
+83,Dango,Ouattara,O.Dango,5,94,MID
+101,Caoimhín,Kelleher,Kelleher,5,94,GKP
+102,Ellery,Balcombe,Balcombe,5,94,GKP
+103,Matthew,Cox,Cox,5,94,GKP
+104,Julian,Eyestone,Eyestone,5,94,GKP
+105,Hákon Rafn,Valdimarsson,Valdimarsson,5,94,GKP
+106,Nathan,Collins,Collins,5,94,DEF
+107,Keane,Lewis-Potter,Lewis-Potter,5,94,DEF
+108,Kristoffer,Ajer,Ajer,5,94,DEF
+109,Rico,Henry,Henry,5,94,DEF
+110,Michael,Kayode,Kayode,5,94,DEF
+111,Ethan,Pinnock,Pinnock,5,94,DEF
+112,Mads,Roerslev Rasmussen,Roerslev,5,94,DEF
+113,Sepp,van den Berg,Van den Berg,5,94,DEF
+114,Benjamin,Arthur,Arthur,5,94,DEF
+115,Benjamin,Fredrick,Fredrick,5,94,DEF
+116,Aaron,Hickey,Hickey,5,94,DEF
+117,Kim,Ji-soo,Ji-soo,5,94,DEF
+118,Jayden,Meghoma,Meghoma,5,94,DEF
+120,Kevin,Schade,Schade,5,94,MID
+121,Mikkel,Damsgaard,Damsgaard,5,94,MID
+122,Antoni,Milambo,Milambo,5,94,MID
+123,Fábio,Freitas Gouveia Carvalho,Carvalho,5,94,MID
+124,Jordan,Henderson,Henderson,5,94,MID
+125,Vitaly,Janelt,Janelt,5,94,MID
+126,Mathias,Jensen,Jensen,5,94,MID
+127,Gustavo,Nunes Fernandes Gomes,Nunes,5,94,MID
+128,Frank,Onyeka,Onyeka,5,94,MID
+129,Yehor,Yarmoliuk,Yarmoliuk,5,94,MID
+130,Romelle,Donovan,Donovan,5,94,MID
+131,Yunus Emre,Konak,Konak,5,94,MID
+132,Paris,Maghoma,Maghoma,5,94,MID
+133,Myles,Peart-Harris,Peart-Harris,5,94,MID
+134,Ryan,Trevitt,Trevitt,5,94,MID
+136,Igor Thiago,Nascimento Rodrigues,Thiago,5,94,FWD
+137,Iwan,Morgan,Morgan,5,94,FWD
+138,Jason,Steele,Steele,6,36,GKP
+139,Bart,Verbruggen,Verbruggen,6,36,GKP
+140,Tom,McGill,McGill,6,36,GKP
+141,Carl,Rushworth,Rushworth,6,36,GKP
+142,Kjell,Scherpen,Scherpen,6,36,GKP
+143,Olivier,Boscagli,Boscagli,6,36,DEF
+144,Diego,Coppola,Coppola,6,36,DEF
+145,Maxim,De Cuyper,De Cuyper,6,36,DEF
+146,Lewis,Dunk,Dunk,6,36,DEF
+147,Pervis,Estupiñán Tenorio,Estupiñan,6,36,DEF
+148,Ferdi,Kadıoğlu,F.Kadıoğlu,6,36,DEF
+150,Tariq,Lamptey,Lamptey,6,36,DEF
+151,Jan Paul,van Hecke,Van Hecke,6,36,DEF
+152,Joël,Veltman,Veltman,6,36,DEF
+153,Adam,Webster,Webster,6,36,DEF
+154,Eiran,Cashin,Cashin,6,36,DEF
+155,Jacob,Slater,Slater,6,36,DEF
+156,Charlie,Tasker,Tasker,6,36,DEF
+157,Mitoma,Kaoru,Mitoma,6,36,MID
+158,Georginio,Rutter,Georginio,6,36,MID
+159,Solly,March,March,6,36,MID
+160,Yankuba,Minteh,Minteh,6,36,MID
+161,Julio,Enciso Espínola,Enciso,6,36,MID
+162,Brajan,Gruda,Gruda,6,36,MID
+163,Jack,Hinshelwood,Hinshelwood,6,36,MID
+164,Matt,O'Riley,O'Riley,6,36,MID
+165,Abdallah,Sima,Sima,6,36,MID
+166,Yasin,Ayari,Ayari,6,36,MID
+167,Carlos,Baleba,Baleba,6,36,MID
+169,Diego,Gómez Amarilla,Gomez,6,36,MID
+170,James,Milner,Milner,6,36,MID
+171,Jeremy,Sarmiento Morante,Sarmiento,6,36,MID
+172,Tom,Watson,Watson,6,36,MID
+173,Mats,Wieffer,Wieffer,6,36,MID
+174,Malick,Yalcouyé,Yalcouye,6,36,MID
+175,Joe,Knight,Knight,6,36,MID
+176,Adrian,Mazilu,Mazilu,6,36,MID
+177,Andrew,Moran,Moran,6,36,MID
+178,Danny,Welbeck,Welbeck,6,36,FWD
+179,Evan,Ferguson,Ferguson,6,36,FWD
+180,Stefanos,Tzimas,Tzimas,6,36,FWD
+181,Charalampos,Kostoulas,Kostoulas,6,36,FWD
+168,Facundo,Buonanotte,Buonanotte,7,8,MID
+220,Robert,Lynch Sánchez,Sánchez,7,8,GKP
+221,Filip,Jörgensen,Jörgensen,7,8,GKP
+222,Mike,Penders,Penders,7,8,GKP
+223,Gabriel,Słonina,Slonina,7,8,GKP
+224,Marc,Cucurella Saseta,Cucurella,7,8,DEF
+225,Reece,James,James,7,8,DEF
+226,Trevoh,Chalobah,Chalobah,7,8,DEF
+227,Levi,Samuels Colwill,Colwill,7,8,DEF
+228,Malo,Gusto,Gusto,7,8,DEF
+229,Benoît,Badiashile Mukinayi,B.Badiashile,7,8,DEF
+230,Wesley,Fofana,Fofana,7,8,DEF
+231,Mamadou,Sarr,M.Sarr,7,8,DEF
+232,Tosin,Adarabioyo,Tosin,7,8,DEF
+233,Josh,Acheampong,Acheampong,7,8,DEF
+234,Aarón,Anselmino,Anselmino,7,8,DEF
+235,Cole,Palmer,Palmer,7,8,MID
+236,Pedro,Lomba Neto,Neto,7,8,MID
+237,Enzo,Fernández,Enzo,7,8,MID
+238,Estêvão,Almeida de Oliveira Gonçalves,Estêvão,7,8,MID
+239,Jamie,Bynoe-Gittens,Gittens,7,8,MID
+240,Christopher,Nkunku,Nkunku,7,8,MID
+241,Moisés,Caicedo Corozo,Caicedo,7,8,MID
+243,Tyrique,George,George,7,8,MID
+244,Roméo,Lavia,Lavia,7,8,MID
+245,Mykhailo,Mudryk,Mudryk,7,8,MID
+246,Andrey,Nascimento dos Santos,Andrey Santos,7,8,MID
+247,Dário,Luís Essugo,D.Essugo,7,8,MID
+248,Kendry,Páez Andrade,Paez,7,8,MID
+249,João Pedro,Junqueira de Jesus,João Pedro,7,8,FWD
+250,Liam,Delap,Delap,7,8,FWD
+251,Nicolas,Jackson,N.Jackson,7,8,FWD
+252,Marc,Guiu Paz,Marc Guiu,7,8,FWD
+453,Alejandro,Garnacho Ferreyra,Garnacho,7,8,MID
+672,Jorrel,Hato,Hato,7,8,DEF
+253,Dean,Henderson,Henderson,8,31,GKP
+254,Walter,Benítez,Benitez,8,31,GKP
+255,Remi,Matthews,Matthews,8,31,GKP
+256,Daniel,Muñoz Mejía,Muñoz,8,31,DEF
+257,Maxence,Lacroix,Lacroix,8,31,DEF
+258,Tyrick,Mitchell,Mitchell,8,31,DEF
+259,Borna,Sosa,Sosa,8,31,DEF
+260,Marc,Guéhi,Guéhi,8,31,DEF
+261,Chris,Richards,Richards,8,31,DEF
+262,Chadi,Riad Dnanou,Chadi Riad,8,31,DEF
+263,Nathaniel,Clyne,Clyne,8,31,DEF
+264,Rob,Holding,Holding,8,31,DEF
+265,Caleb,Kporha,Kporha,8,31,DEF
+267,Ismaïla,Sarr,Sarr,8,31,MID
+268,Cheick,Doucouré,Doucouré,8,31,MID
+269,Romain,Esse,Esse,8,31,MID
+270,Will,Hughes,Hughes,8,31,MID
+271,Daichi,Kamada,Kamada,8,31,MID
+272,Jefferson,Lerma Solís,Lerma,8,31,MID
+273,Adam,Wharton,Wharton,8,31,MID
+274,Asher,Agbinone,Agbinone,8,31,MID
+275,Naouirou,Ahamada,Ahamada,8,31,MID
+276,Justin,Devenny,Devenny,8,31,MID
+277,Malcolm,Ebiowei,Ebiowei,8,31,MID
+278,Jesurun,Rak-Sakyi,J.Rak-Sakyi,8,31,MID
+279,Matheus,França de Oliveira,M.França,8,31,MID
+280,David,Ozoh,Ozoh,8,31,MID
+281,Kaden,Rodney,Rodney,8,31,MID
+282,Franco,Umeh-Chibueze,Umeh,8,31,MID
+283,Jean-Philippe,Mateta,Mateta,8,31,FWD
+284,Eddie,Nketiah,Nketiah,8,31,FWD
+285,Odsonne,Édouard,Édouard,8,31,FWD
+286,Zach,Marsh,Marsh,8,31,FWD
+690,Rio,Cardines,Cardines,8,31,MID
+712,Yéremy,Pino Santos,Yeremy,8,31,MID
+723,Jaydee,Canvot,Canvot,8,31,DEF
+732,Christantus,Uche,Uche,8,31,FWD
+242,Kiernan,Dewsbury-Hall,Dewsbury-Hall,9,11,MID
+287,Jordan,Pickford,Pickford,9,11,GKP
+288,Mark,Travers,Travers,9,11,GKP
+289,Harry,Tyrer,Tyrer,9,11,GKP
+290,Jarrad,Branthwaite,Branthwaite,9,11,DEF
+291,James,Tarkowski,Tarkowski,9,11,DEF
+292,Vitalii,Mykolenko,Mykolenko,9,11,DEF
+293,Jake,O'Brien,O'Brien,9,11,DEF
+294,Séamus,Coleman,Coleman,9,11,DEF
+295,Michael,Keane,Keane,9,11,DEF
+296,Nathan,Patterson,Patterson,9,11,DEF
+297,Roman,Dixon,Dixon,9,11,DEF
+298,Reece,Welch,Welch,9,11,DEF
+299,Iliman,Ndiaye,Ndiaye,9,11,MID
+300,Dwight,McNeil,McNeil,9,11,MID
+301,Carlos,Alcaraz Durán,Alcaraz,9,11,MID
+302,Idrissa Gana,Gueye,Gana,9,11,MID
+303,James,Garner,Garner,9,11,MID
+304,Tim,Iroegbunam,Iroegbunam,9,11,MID
+305,Harrison,Armstrong,Armstrong,9,11,MID
+306,Callum,Bates,Bates,9,11,MID
+307,Coby,Ebere,Ebere,9,11,MID
+308,Isaac,Heath,Heath,9,11,MID
+309,Jenson,Metcalfe,Metcalfe,9,11,MID
+310,Thierno,Barry,Barry,9,11,FWD
+311,Norberto Bercique,Gomes Betuncal,Beto,9,11,FWD
+312,Youssef,Ramalho Chermiti,Y.Chermiti,9,11,FWD
+313,Martin,Sherif,Sherif,9,11,FWD
+419,Jack,Grealish,Grealish,9,11,MID
+630,Tom,King,King,9,11,GKP
+667,Adam,Aznou,Aznou,9,11,DEF
+704,Tyler,Onyango,Onyango,9,11,MID
+705,Elijah,Campbell,Campbell,9,11,DEF
+707,Tyler,Dibling,Dibling,9,11,MID
+728,Merlin,Röhl,Röhl,9,11,MID
+314,Bernd,Leno,Leno,10,54,GKP
+315,Steven,Benda,Benda,10,54,GKP
+316,Antonee,Robinson,Robinson,10,54,DEF
+317,Joachim,Andersen,Andersen,10,54,DEF
+318,Calvin,Bassey,Bassey,10,54,DEF
+319,Timothy,Castagne,Castagne,10,54,DEF
+320,Issa,Diop,Diop,10,54,DEF
+321,Jorge,Cuenca Barreno,J.Cuenca,10,54,DEF
+322,Kenny,Tete,Tete,10,54,DEF
+323,Samuel,Amissah,Amissah,10,54,DEF
+324,Alex,Iwobi,Iwobi,10,54,MID
+325,Emile,Smith Rowe,Smith Rowe,10,54,MID
+326,Adama,Traoré Diarra,Adama,10,54,MID
+327,Andreas,Hoelgebaum Pereira,Andreas,10,54,MID
+328,Ryan,Sessegnon,Sessegnon,10,54,MID
+329,Harry,Wilson,Wilson,10,54,MID
+330,Sander,Berge,Berge,10,54,MID
+331,Tom,Cairney,Cairney,10,54,MID
+332,Saša,Lukić,Lukić,10,54,MID
+333,Martial,Godo,Godo,10,54,MID
+334,Luke,Harris,Harris,10,54,MID
+335,Josh,King,King,10,54,MID
+336,Harrison,Reed,Reed,10,54,MID
+337,Raúl,Jiménez Rodríguez,Raúl,10,54,FWD
+338,Rodrigo,Muniz Carvalho,Muniz,10,54,FWD
+664,Benjamin,Lecomte,Lecomte,10,54,GKP
+727,Samuel,Chukwueze,Chukwueze,10,54,MID
+731,Kevin,Santos Lopes de Macedo,Kevin,10,54,MID
+737,Jonah,Kusi-Asare,Kusi-Asare,10,54,FWD
+339,Illan,Meslier,Meslier,11,2,GKP
+340,Alex,Cairns,Cairns,11,2,GKP
+341,Karl,Darlow,Darlow,11,2,GKP
+342,Jayden,Bogle,Bogle,11,2,DEF
+343,Pascal,Struijk,Struijk,11,2,DEF
+344,Jaka,Bijol,Bijol,11,2,DEF
+345,Sebastiaan,Bornauw,Bornauw,11,2,DEF
+346,Sam,Byram,Byram,11,2,DEF
+347,Gabriel,Gudmundsson,Gudmundsson,11,2,DEF
+348,Joe,Rodon,Rodon,11,2,DEF
+349,Isaac,Schmidt,Schmidt,11,2,DEF
+350,Brenden,Aaronson,Aaronson,11,2,MID
+351,Wilfried,Gnonto,Gnonto,11,2,MID
+352,Jack,Harrison,Harrison,11,2,MID
+353,Daniel,James,James,11,2,MID
+354,Ethan,Ampadu,Ampadu,11,2,MID
+355,Sam,Greenwood,Greenwood,11,2,MID
+356,Ilia,Gruev,Gruev,11,2,MID
+357,Largie,Ramazani,Ramazani,11,2,MID
+358,Tanaka,Ao,Tanaka,11,2,MID
+359,Charlie,Crew,Crew,11,2,MID
+360,Joe,Gelhardt,Gelhardt,11,2,MID
+361,Darko,Gyabi,Gyabi,11,2,MID
+362,Joël,Piroe,Piroe,11,2,FWD
+363,Patrick,Bamford,Bamford,11,2,FWD
+364,Mateo,Joseph Fernández-Regatillo,Mateo Joseph,11,2,FWD
+365,Lukas,Nmecha,Nmecha,11,2,FWD
+493,Sean,Longstaff,Longstaff,11,2,MID
+660,Anton,Stach,Stach,11,2,MID
+665,Lucas Estella,Perri,Perri,11,2,GKP
+691,Dominic,Calvert-Lewin,Calvert-Lewin,11,2,FWD
+698,Noah,Okafor,Okafor,11,2,MID
+706,James,Justin,Justin,11,2,DEF
+366,Alisson,Becker,A.Becker,12,14,GKP
+367,Giorgi,Mamardashvili,Mamardashvili,12,14,GKP
+368,Ármin,Pécsi,Pécsi,12,14,GKP
+369,Freddie,Woodman,Woodman,12,14,GKP
+370,Jeremie,Frimpong,Frimpong,12,14,DEF
+371,Milos,Kerkez,Kerkez,12,14,DEF
+372,Andrew,Robertson,Robertson,12,14,DEF
+373,Virgil,van Dijk,Virgil,12,14,DEF
+374,Ibrahima,Konaté,Konaté,12,14,DEF
+375,Conor,Bradley,Bradley,12,14,DEF
+376,Joe,Gomez,Gomez,12,14,DEF
+377,Konstantinos,Tsimikas,Tsimikas,12,14,DEF
+378,Amara,Nallo,Nallo,12,14,DEF
+379,Rhys,Williams,R.Williams,12,14,DEF
+380,Calvin,Ramsay,Ramsay,12,14,DEF
+381,Mohamed,Salah,M.Salah,12,14,MID
+382,Florian,Wirtz,Wirtz,12,14,MID
+383,Luis,Díaz Marulanda,Luis Díaz,12,14,MID
+384,Cody,Gakpo,Gakpo,12,14,MID
+385,Federico,Chiesa,Chiesa,12,14,MID
+386,Alexis,Mac Allister,Mac Allister,12,14,MID
+387,Dominik,Szoboszlai,Szoboszlai,12,14,MID
+388,Curtis,Jones,C.Jones,12,14,MID
+390,Ryan,Gravenberch,Gravenberch,12,14,MID
+392,Endo,Wataru,Endo,12,14,MID
+393,Stefan,Bajčetić Maquieira,Bajcetic,12,14,MID
+394,James,McConnell,McConnell,12,14,MID
+395,Tyler,Morton,Morton,12,14,MID
+396,Trey,Nyoni,Nyoni,12,14,MID
+397,Darwin,Núñez Ribeiro,Darwin,12,14,FWD
+398,Jayden,Danns,Danns,12,14,FWD
+499,Alexander,Isak,Isak,12,14,FWD
+661,Hugo,Ekitiké,Ekitiké,12,14,FWD
+686,Rio,Ngumoha,Ngumoha,12,14,MID
+692,Giovanni,Leoni,Leoni,12,14,DEF
+182,James,Trafford,Trafford,13,43,GKP
+399,Ederson,Santana de Moraes,Ederson M.,13,43,GKP
+400,Stefan,Ortega Moreno,Ortega Moreno,13,43,GKP
+401,Marcus,Bettinelli,Bettinelli,13,43,GKP
+402,Rayan,Aït-Nouri,Aït-Nouri,13,43,DEF
+403,Joško,Gvardiol,Gvardiol,13,43,DEF
+404,Manuel,Akanji,Akanji,13,43,DEF
+405,Nathan,Aké,Aké,13,43,DEF
+406,Abdukodir,Khusanov,Khusanov,13,43,DEF
+407,Matheus,Nunes,Matheus N.,13,43,DEF
+408,Rúben,dos Santos Gato Alves Dias,Rúben,13,43,DEF
+409,John,Stones,Stones,13,43,DEF
+410,Rico,Lewis,Lewis,13,43,DEF
+411,Nico,O'Reilly,O’Reilly,13,43,DEF
+412,Vitor,de Oliveira Nunes dos Reis,Vitor Reis,13,43,DEF
+413,Omar,Marmoush,Marmoush,13,43,MID
+414,Phil,Foden,Foden,13,43,MID
+415,Sávio,Moreira de Oliveira,Savinho,13,43,MID
+416,Bernardo,Mota Veiga de Carvalho e Silva,Bernardo,13,43,MID
+417,Rayan,Cherki,Cherki,13,43,MID
+418,Jérémy,Doku,Doku,13,43,MID
+420,İlkay,Gündoğan,Gündoğan,13,43,MID
+421,Rodrigo 'Rodri',Hernandez Cascante,Rodrigo,13,43,MID
+422,Mateo,Kovačić,Kovačić,13,43,MID
+423,Nico,González Iglesias,N.Gonzalez,13,43,MID
+424,Oscar,Bobb,Bobb,13,43,MID
+425,Claudio,Echeverri,Echeverri,13,43,MID
+427,Tijjani,Reijnders,Reijnders,13,43,MID
+428,Sverre,Nypan,Nypan,13,43,MID
+429,Kalvin,Phillips,Phillips,13,43,MID
+430,Erling,Haaland,Haaland,13,43,FWD
+736,Gianluigi,Donnarumma,Donnarumma,13,43,GKP
+739,Divine,Mukasa,Mukasa,13,43,MID
+740,Stephen,Mfuni,Mfuni,13,43,DEF
+119,Bryan,Mbeumo,Mbeumo,14,1,MID
+431,Altay,Bayındır,Bayindir,14,1,GKP
+432,André,Onana,Onana,14,1,GKP
+433,Elyh,Harrison,Harrison,14,1,GKP
+434,Tom,Heaton,Heaton,14,1,GKP
+435,Dermot,Mee,Mee,14,1,GKP
+436,Matthijs,de Ligt,De Ligt,14,1,DEF
+437,Lisandro,Martínez,Martinez,14,1,DEF
+438,Noussair,Mazraoui,Mazraoui,14,1,DEF
+439,Diego,León Blanco,D.Leon,14,1,DEF
+440,Diogo,Dalot Teixeira,Dalot,14,1,DEF
+441,Patrick,Dorgu,Dorgu,14,1,DEF
+442,Harry,Maguire,Maguire,14,1,DEF
+443,Luke,Shaw,Shaw,14,1,DEF
+444,Leny,Yoro,Yoro,14,1,DEF
+445,Harry,Amass,Amass,14,1,DEF
+446,Tyler,Fredricson,Fredricson,14,1,DEF
+447,Ayden,Heaven,Heaven,14,1,DEF
+448,Tyrell,Malacia,Malacia,14,1,DEF
+449,Bruno,Borges Fernandes,B.Fernandes,14,1,MID
+450,Matheus,Santos Carneiro da Cunha,Cunha,14,1,MID
+451,Marcus,Rashford,Rashford,14,1,MID
+452,Amad,Diallo,Amad,14,1,MID
+454,Antony,dos Santos,Antony,14,1,MID
+455,Mason,Mount,Mount,14,1,MID
+457,Carlos Henrique,Casimiro,Casemiro,14,1,MID
+458,Kobbie,Mainoo,Mainoo,14,1,MID
+459,Manuel,Ugarte Ribeiro,Ugarte,14,1,MID
+460,Toby,Collyer,Collyer,14,1,MID
+461,Jayce,Fitzgerald,Fitzgerald,14,1,MID
+462,Jack,Fletcher,J.Fletcher,14,1,MID
+463,Sékou,Koné,Kone,14,1,MID
+464,Jack,Moorhouse,Moorhouse,14,1,MID
+465,Rasmus,Højlund,Højlund,14,1,FWD
+466,Joshua,Zirkzee,Zirkzee,14,1,FWD
+467,Chido,Obi,Obi,14,1,FWD
+468,Ethan,Wheatley,Wheatley,14,1,FWD
+681,Benjamin,Sesko,Šeško,14,1,FWD
+733,Senne,Lammens,Lammens,14,1,GKP
+52,Jacob,Ramsey,J.Ramsey,15,4,MID
+135,Yoane,Wissa,Wissa,15,4,FWD
+469,Nick,Pope,Pope,15,4,GKP
+471,Mark,Gillespie,Gillespie,15,4,GKP
+472,Odysseas,Vlachodimos,Odysseas,15,4,GKP
+473,Lewis,Hall,Hall,15,4,DEF
+474,Fabian,Schär,Schär,15,4,DEF
+475,Sven,Botman,Botman,15,4,DEF
+476,Dan,Burn,Burn,15,4,DEF
+477,Tino,Livramento,Livramento,15,4,DEF
+478,Kieran,Trippier,Trippier,15,4,DEF
+479,Emil,Krafth,Krafth,15,4,DEF
+480,Jamaal,Lascelles,Lascelles,15,4,DEF
+481,Alex,Murphy,A.Murphy,15,4,DEF
+482,Harrison,Ashby,Ashby,15,4,DEF
+483,Miodrag,Pivaš,Pivas,15,4,DEF
+484,Matt,Targett,Targett,15,4,DEF
+485,Anthony,Gordon,Gordon,15,4,MID
+486,Anthony,Elanga,Elanga,15,4,MID
+487,Harvey,Barnes,Barnes,15,4,MID
+488,Bruno,Guimarães Rodriguez Moura,Bruno G.,15,4,MID
+489,Jacob,Murphy,J.Murphy,15,4,MID
+490,Joelinton Cássio,Apolinário de Lira,Joelinton,15,4,MID
+491,Sandro,Tonali,Tonali,15,4,MID
+492,Antoñito,Cordero Campillo,Antoñito C.,15,4,MID
+494,Joe,Willock,Willock,15,4,MID
+495,Isaac,Hayden,Hayden,15,4,MID
+496,Garang,Kuol,Kuol,15,4,MID
+497,Lewis,Miley,L.Miley,15,4,MID
+498,Joe,White,White,15,4,MID
+500,William,Osula,Osula,15,4,FWD
+501,Sean,Neave,Neave,15,4,FWD
+674,Aaron,Ramsdale,Ramsdale,15,4,GKP
+684,Malick,Thiaw,Thiaw,15,4,DEF
+689,Seung-Soo,Park,Seung soo,15,4,MID
+714,Nick,Woltemade,Woltemade,15,4,FWD
+12,Oleksandr,Zinchenko,Zinchenko,16,17,DEF
+426,James,McAtee,McAtee,16,17,MID
+502,Matz,Sels,Sels,16,17,GKP
+503,Carlos Miguel,dos Santos Pereira,C.Miguel,16,17,GKP
+504,Matt,Turner,Turner,16,17,GKP
+505,Nikola,Milenković,Milenković,16,17,DEF
+506,Murillo,Costa dos Santos,Murillo,16,17,DEF
+507,Ola,Aina,Aina,16,17,DEF
+508,Neco,Williams,N.Williams,16,17,DEF
+509,David,Mota Veiga Teixeira do Carmo,David Carmo,16,17,DEF
+510,Jair,Paula da Cunha Filho,Jair Cunha,16,17,DEF
+511,Felipe,Rodrigues da Silva,Morato,16,17,DEF
+512,Omar,Richards,O.Richards,16,17,DEF
+513,Zach,Abbott,Abbott,16,17,DEF
+514,Willy,Boly,Boly,16,17,DEF
+515,Morgan,Gibbs-White,Gibbs-White,16,17,MID
+516,Callum,Hudson-Odoi,Hudson-Odoi,16,17,MID
+517,Elliot,Anderson,Anderson,16,17,MID
+518,João Pedro,Ferreira da Silva,Jota,16,17,MID
+519,Nicolás,Domínguez,Dominguez,16,17,MID
+520,Lewis,O'Brien,O'Brien,16,17,MID
+521,Ibrahim,Sangaré,Sangaré,16,17,MID
+522,Ryan,Yates,Yates,16,17,MID
+523,Eric,da Silva Moreira,Da Silva Moreira,16,17,MID
+524,Marko,Stamenić,Stamenic,16,17,MID
+525,Chris,Wood,Wood,16,17,FWD
+526,Igor Jesus,Maciel da Cruz,Igor Jesus,16,17,FWD
+527,Taiwo,Awoniyi,Awoniyi,16,17,FWD
+669,Dan,Ndoye,Ndoye,16,17,MID
+675,Angus,Gunn,Gunn,16,17,GKP
+693,Omari,Hutchinson,Hutchinson,16,17,MID
+696,Arnaud,Kalimuendo,Kalimuendo,16,17,FWD
+699,Douglas Luiz,Soares de Paulo,Douglas Luiz,16,17,MID
+715,John Victor,Maciel Furtado,John,16,17,GKP
+716,Nicolò,Savona,Savona,16,17,DEF
+729,Luis Eduardo,Soares da Silva,Cuiabano,16,17,DEF
+734,Dilane,Bakwa,Bakwa,16,17,MID
+528,Anthony,Patterson,Patterson,17,56,GKP
+529,Simon,Moore,Moore,17,56,GKP
+530,Blondy,Nna Noukeu,Nna Noukeu,17,56,GKP
+531,Daniel,Ballard,Ballard,17,56,DEF
+532,Trai,Hume,Hume,17,56,DEF
+533,Aji,Alese,Alese,17,56,DEF
+534,Joe,Anderson,Anderson,17,56,DEF
+535,Dennis,Cirkin,Cirkin,17,56,DEF
+536,Leo Fuhr,Hjelde,Hjelde,17,56,DEF
+537,Niall,Huggins,Huggins,17,56,DEF
+538,Zak,Johnson,Johnson,17,56,DEF
+539,Luke,O'Nien,O'Nien,17,56,DEF
+540,Timothée,Pembélé,Pembele,17,56,DEF
+541,Reinildo,Mandava,Reinildo,17,56,DEF
+542,Jenson,Seelt,Seelt,17,56,DEF
+543,Simon,Adingra,Adingra,17,56,MID
+544,Habib,Diarra,Diarra,17,56,MID
+545,Patrick,Roberts,Roberts,17,56,MID
+546,Milan,Aleksić,Aleksić,17,56,MID
+547,Enzo,Le Fée,E.Le Fée,17,56,MID
+548,Romaine,Mundle,Mundle,17,56,MID
+549,Dan,Neil,Neil,17,56,MID
+550,Ian,Poveda-Ocampo,Poveda,17,56,MID
+551,Chris,Rigg,Rigg,17,56,MID
+552,Noah,Sadiki,Sadiki,17,56,MID
+553,Chemsdine,Talbi,Talbi,17,56,MID
+554,Abdoullah,Ba,Ba,17,56,MID
+555,Alan,Browne,Browne,17,56,MID
+556,Pierre,Ekwah Elimby,Ekwah,17,56,MID
+557,Harrison,Jones,H.Jones,17,56,MID
+558,Jay,Matete,Matete,17,56,MID
+559,Nectarios,Triantis,Triantis,17,56,MID
+560,Wilson,Isidor,Isidor,17,56,FWD
+561,Eliezer,Mayenda Dossou,Mayenda,17,56,FWD
+562,Ahmed,Abdullahi,Abdullahi,17,56,FWD
+563,Luís Hemir,Silva Semedo,Luís Hemir,17,56,FWD
+564,Nazarii,Rusyn,Rusyn,17,56,FWD
+668,Granit,Xhaka,Xhaka,17,56,MID
+670,Robin,Roefs,Roefs,17,56,GKP
+678,Arthur,Masuaku,Masuaku,17,56,DEF
+683,Omar,Alderete,Alderete,17,56,DEF
+694,Nordi,Mukiele,Mukiele,17,56,DEF
+724,Lutsharel,Geertruida,Geertruida,17,56,DEF
+730,Brian,Brobbey,Brobbey,17,56,FWD
+735,Bertrand,Traoré,Traoré,17,56,MID
+565,Guglielmo,Vicario,Vicario,18,6,GKP
+566,Brandon,Austin,Austin,18,6,GKP
+567,Antonín,Kinský,Kinsky,18,6,GKP
+568,Pedro,Porro Sauceda,Pedro Porro,18,6,DEF
+569,Cristian,Romero,Romero,18,6,DEF
+570,Kevin,Danso,Danso,18,6,DEF
+571,Ben,Davies,Davies,18,6,DEF
+572,Radu,Drăgușin,Dragusin,18,6,DEF
+573,Djed,Spence,Spence,18,6,DEF
+574,Destiny,Udogie,Udogie,18,6,DEF
+575,Micky,van de Ven,Van de Ven,18,6,DEF
+576,Ashley,Phillips,Phillips,18,6,DEF
+577,Takai,Kōta,Takai,18,6,DEF
+578,Luka,Vušković,Vuskovic,18,6,DEF
+579,Son,Heung-min,Son,18,6,MID
+580,Brennan,Johnson,Johnson,18,6,MID
+581,James,Maddison,Maddison,18,6,MID
+582,Mohammed,Kudus,Kudus,18,6,MID
+583,Dejan,Kulusevski,Kulusevski,18,6,MID
+584,Mathys,Tel,Tel,18,6,MID
+585,Rodrigo,Bentancur,Bentancur,18,6,MID
+586,Lucas,Bergvall,Bergvall,18,6,MID
+587,Yves,Bissouma,Bissouma,18,6,MID
+588,Wilson,Odobert,Odobert,18,6,MID
+589,Manor,Solomon,Solomon,18,6,MID
+590,Bryan,Gil Salvatierra,Bryan,18,6,MID
+591,Archie,Gray,Gray,18,6,MID
+592,Mikey,Moore,Moore,18,6,MID
+593,Pape Matar,Sarr,P.M.Sarr,18,6,MID
+594,Yang,Min-hyeok,Min-hyeok,18,6,MID
+595,Callum,Olusesi,Olusesi,18,6,MID
+596,Dominic,Solanke-Mitchell,Solanke,18,6,FWD
+597,Richarlison,de Andrade,Richarlison,18,6,FWD
+598,Will,Lankshear,Lankshear,18,6,FWD
+599,Dane,Scarlett,Scarlett,18,6,FWD
+673,João Maria,Lobo Alves Palhares Costa Palhinha Gonçalves,J.Palhinha,18,6,MID
+717,Xavi,Simons,Xavi,18,6,MID
+726,Randal,Kolo Muani,Kolo Muani,18,6,FWD
+149,Igor Julio,dos Santos de Paulo,Igor,19,21,DEF
+600,Alphonse,Areola,Areola,19,21,GKP
+601,Wes,Foderingham,Foderingham,19,21,GKP
+602,Krisztián,Hegyi,Hegyi,19,21,GKP
+603,El Hadji Malick,Diouf,Diouf,19,21,DEF
+604,Emerson,Palmieri dos Santos,Emerson,19,21,DEF
+605,Maximilian,Kilman,Kilman,19,21,DEF
+606,Konstantinos,Mavropanos,Mavropanos,19,21,DEF
+607,Nayef,Aguerd,N.Aguerd,19,21,DEF
+608,Ollie,Scarles,Scarles,19,21,DEF
+609,Jean-Clair,Todibo,Todibo,19,21,DEF
+610,Aaron,Wan-Bissaka,Wan-Bissaka,19,21,DEF
+611,Kaelan,Casey,Casey,19,21,DEF
+612,Lucas,Tolentino Coelho de Lima,L.Paquetá,19,21,MID
+613,Tomáš,Souček,Souček,19,21,MID
+614,James,Ward-Prowse,Ward-Prowse,19,21,MID
+615,Crysencio,Summerville,Summerville,19,21,MID
+616,Edson,Álvarez Velázquez,Álvarez,19,21,MID
+617,Maxwel,Cornet,Cornet,19,21,MID
+618,Guido,Rodríguez,G.Rodriguez,19,21,MID
+619,Luis Guilherme,Lira dos Santos,L.Guilherme,19,21,MID
+620,George,Earthy,Earthy,19,21,MID
+621,Andy,Irving,Irving,19,21,MID
+622,Lewis,Orford,Orford,19,21,MID
+623,Freddie,Potts,Potts,19,21,MID
+624,Jarrod,Bowen,Bowen,19,21,FWD
+625,Niclas,Füllkrug,Füllkrug,19,21,FWD
+626,Callum,Marshall,Marshall,19,21,FWD
+659,Kyle,Walker-Peters,Walker-Peters,19,21,DEF
+671,Callum,Wilson,Wilson,19,21,FWD
+679,Mads,Hermansen,Hermansen,19,21,GKP
+708,Mateus Gonçalo,Espanha Fernandes,M.Fernandes,19,21,MID
+718,Soungoutou,Magassa,S.Magassa,19,21,MID
+738,Lukasz,Fabianski,Fabianski,19,21,GKP
+627,Sam,Johnstone,Johnstone,20,39,GKP
+628,José,Malheiro de Sá,José Sá,20,39,GKP
+629,Daniel,Bentley,Bentley,20,39,GKP
+631,Emmanuel,Agbadou,Agbadou,20,39,DEF
+632,Matt,Doherty,Doherty,20,39,DEF
+633,Hugo,Bueno López,H.Bueno,20,39,DEF
+634,Yerson,Mosquera Valdelamar,Mosquera,20,39,DEF
+635,Rodrigo,Martins Gomes,R.Gomes,20,39,DEF
+636,Santiago,Ignacio Bueno,S.Bueno,20,39,DEF
+637,Toti,Gomes,Toti,20,39,DEF
+638,Ki-Jana,Hoever,Hoever,20,39,DEF
+639,Bastien,Meupiyou Menadjou,Meupiyou,20,39,DEF
+640,Pedro,Cardoso de Lima,Pedro Lima,20,39,DEF
+641,Alfie,Pond,Pond,20,39,DEF
+642,Hwang,Hee-chan,Hee Chan,20,39,MID
+643,André,Trindade da Costa Neto,André,20,39,MID
+644,Jean-Ricner,Bellegarde,Bellegarde,20,39,MID
+645,Fer,López González,Fer López,20,39,MID
+646,João Victor,Gomes da Silva,Gomes,20,39,MID
+647,Gonçalo Manuel,Ganchinho Guedes,Guedes,20,39,MID
+648,Marshall,Munetsi,Munetsi,20,39,MID
+649,Boubacar,Traoré,B.Traore,20,39,MID
+650,Tawanda,Chirewa,Chirewa,20,39,MID
+651,Tom,Edozie,Edozie,20,39,MID
+652,Enso,González Medina,Gonzalez,20,39,MID
+653,Joe,Hodge,Hodge,20,39,MID
+654,Jørgen,Strand Larsen,Strand Larsen,20,39,FWD
+655,Fábio,Soares Silva,Fábio Silva,20,39,FWD
+656,Saša,Kalajdžić,Kalajdžić,20,39,FWD
+657,Leon,Chiwome,Chiwome,20,39,FWD
+658,Nathan,Fraser,Fraser,20,39,FWD
+663,Jhon,Arias,J.Arias,20,39,MID
+682,David,Møller Wolfe,Møller Wolfe,20,39,DEF
+695,Jackson,Tchatchoua,Tchatchoua,20,39,DEF
+709,Ladislav,Krejcí,Krejčí,20,39,DEF
+720,Tolu,Arokodare,Tolu,20,39,FWD
