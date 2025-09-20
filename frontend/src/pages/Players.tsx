@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePlayers } from '../hooks/useFPLData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Link } from 'react-router-dom';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Players = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [positionFilter, setPositionFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
+  const [sortOption, setSortOption] = useState<'points-desc' | 'price-asc' | 'price-desc' | 'name-asc'>('points-desc');
 
   const filters: Record<string, string> = {};
   if (positionFilter) filters.position = positionFilter;
@@ -16,42 +18,62 @@ const Players = () => {
 
   const { data: players, isLoading, error } = usePlayers(filters);
 
-  const filteredPlayers = players?.filter(player =>
-    player.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const availableTeams = useMemo(() => {
+    return Array.from(new Set(players?.map((player) => player.team) ?? [])).sort();
+  }, [players]);
+
+  const filteredPlayers = useMemo(() => {
+    return players?.filter((player) =>
+      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [players, searchTerm]);
+
+  const sortedPlayers = useMemo(() => {
+    if (!filteredPlayers) {
+      return [];
+    }
+
+    const playersCopy = [...filteredPlayers];
+    switch (sortOption) {
+      case 'price-asc':
+        return playersCopy.sort((a, b) => a.now_cost - b.now_cost);
+      case 'price-desc':
+        return playersCopy.sort((a, b) => b.now_cost - a.now_cost);
+      case 'name-asc':
+        return playersCopy.sort((a, b) => a.name.localeCompare(b.name));
+      case 'points-desc':
+      default:
+        return playersCopy.sort((a, b) => b.total_points - a.total_points);
+    }
+  }, [filteredPlayers, sortOption]);
 
   const positions = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'];
-  const teams = [...new Set(players?.map(p => p.team) || [])];
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading player pool..." fullHeight />;
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600">Error loading players data</p>
+      <div className="text-center py-12">
+        <p className="text-red-600 font-medium">Error loading players data. Please refresh and try again.</p>
       </div>
     );
   }
 
+  const hasResults = sortedPlayers.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Players</h1>
           <p className="text-gray-600 mt-1">
-            Browse and analyze Fantasy Premier League players
+            Browse and analyze Fantasy Premier League players with advanced filters and sorting.
           </p>
         </div>
-        <Badge variant="secondary">
-          {filteredPlayers?.length || 0} Players
-        </Badge>
+        <Badge variant="secondary">{sortedPlayers.length} Players</Badge>
       </div>
 
       {/* Filters */}
@@ -59,11 +81,12 @@ const Players = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Filter className="h-5 w-5 mr-2" />
-            Filters
+            Filters &amp; Sorting
           </CardTitle>
+          <CardDescription>Refine the player list by position, team, and price or point trends.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -83,36 +106,54 @@ const Players = () => {
 
             {/* Position Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Position
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
               <select
                 value={positionFilter}
                 onChange={(e) => setPositionFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Positions</option>
-                {positions.map(pos => (
-                  <option key={pos} value={pos}>{pos}</option>
+                {positions.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {pos}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Team Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Team
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Team</label>
               <select
                 value={teamFilter}
                 onChange={(e) => setTeamFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Teams</option>
-                {teams.map(team => (
-                  <option key={team} value={team}>{team}</option>
+                {availableTeams.map((team) => (
+                  <option key={team} value={team}>
+                    {team}
+                  </option>
                 ))}
               </select>
+            </div>
+
+            {/* Sort */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <div className="relative">
+                <ArrowUpDown className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as typeof sortOption)}
+                  className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="points-desc">Points (High to Low)</option>
+                  <option value="price-desc">Price (High to Low)</option>
+                  <option value="price-asc">Price (Low to High)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                </select>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -120,7 +161,7 @@ const Players = () => {
 
       {/* Players Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPlayers?.map((player) => (
+        {sortedPlayers.map((player) => (
           <Card key={player.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -161,9 +202,9 @@ const Players = () => {
         ))}
       </div>
 
-      {filteredPlayers?.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No players found matching your criteria</p>
+      {!hasResults && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No players found matching your criteria. Adjust the filters to discover more options.</p>
         </div>
       )}
     </div>
