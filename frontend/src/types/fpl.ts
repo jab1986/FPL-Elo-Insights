@@ -149,7 +149,7 @@ export interface DashboardStats {
 export interface ChartDataPoint {
   name: string;
   value: number;
-  [key: string]: any;
+  [key: string]: string | number | null | undefined;
 }
 
 export interface TimeSeriesData {
