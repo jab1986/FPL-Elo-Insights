@@ -175,3 +175,85 @@ export interface MatchFilters {
   team?: string;
   finished?: boolean;
 }
+
+// User Team Types
+export interface UserTeamPlayerInfo {
+  id: number | null;
+  web_name: string | null;
+  first_name: string | null;
+  second_name: string | null;
+  team: string | null;
+  team_short_name: string | null;
+  position: string | null;
+  now_cost: number | null;
+  total_points: number | null;
+  selected_by_percent: number | null;
+  event_points?: number | null;
+  status?: string | null;
+}
+
+export interface UserTeamPick {
+  element: number | null;
+  position: number | null;
+  multiplier: number | null;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+  player: UserTeamPlayerInfo;
+}
+
+export interface UserTeamHistoryEntry {
+  event: number | null;
+  points: number | null;
+  total_points: number | null;
+  rank: number | null;
+  overall_rank: number | null;
+  event_transfers: number | null;
+  event_transfers_cost: number | null;
+  bank: number | null;
+  value: number | null;
+  points_on_bench: number | null;
+}
+
+export interface UserTeamPastSeason {
+  season_name: string | null;
+  total_points: number | null;
+  rank: number | null;
+}
+
+export interface UserTeamHistory {
+  current: UserTeamHistoryEntry[];
+  past: UserTeamPastSeason[];
+}
+
+export interface UserTeamSummary {
+  id: number | null;
+  name: string | null;
+  player_first_name: string | null;
+  player_last_name: string | null;
+  player_region_name: string | null;
+  summary_overall_points: number | null;
+  summary_overall_rank: number | null;
+  summary_event_points: number | null;
+  summary_event_rank: number | null;
+  summary_event_transfers: number | null;
+  summary_event_transfers_cost: number | null;
+  current_event: number | null;
+  total_transfers: number | null;
+  team_value: number | null;
+  bank: number | null;
+  favourite_team: number | string | null;
+  favourite_team_name?: string | null;
+  joined_time: string | null;
+}
+
+export interface UserTeamResponse {
+  team: UserTeamSummary;
+  current_event: number | null;
+  current_event_summary: UserTeamHistoryEntry | null;
+  picks: UserTeamPick[];
+  bench: UserTeamPick[];
+  chips: Array<Record<string, unknown>>;
+  history: UserTeamHistory;
+  source: 'live' | 'sample';
+  fetched_at: string;
+}

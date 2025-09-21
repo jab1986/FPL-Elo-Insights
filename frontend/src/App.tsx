@@ -7,6 +7,7 @@ import Teams from './pages/Teams';
 import Matches from './pages/Matches';
 import PlayerDetail from './pages/PlayerDetail';
 import TeamDetail from './pages/TeamDetail';
+import MyTeam from './pages/MyTeam';
 import Layout from './components/Layout';
 
 // Create a client
@@ -31,6 +32,7 @@ function App() {
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:id" element={<TeamDetail />} />
             <Route path="/matches" element={<Matches />} />
+            <Route path="/my-team" element={<MyTeam />} />
           </Routes>
         </Layout>
       </Router>

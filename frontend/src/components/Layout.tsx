@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Users, Shield, Calendar, Home } from 'lucide-react';
+import { BarChart3, Users, Shield, Calendar, Home, UserCircle2 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +10,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'My Team', href: '/my-team', icon: UserCircle2 },
     { name: 'Players', href: '/players', icon: Users },
     { name: 'Teams', href: '/teams', icon: Shield },
     { name: 'Matches', href: '/matches', icon: Calendar },

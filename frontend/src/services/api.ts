@@ -1,4 +1,11 @@
-import type { Player, Team, Match, PlayerMatchStats, GameweekSummary } from '../types/fpl';
+import type {
+  Player,
+  Team,
+  Match,
+  PlayerMatchStats,
+  GameweekSummary,
+  UserTeamResponse,
+} from '../types/fpl';
 
 const API_BASE_URL = 'http://localhost:8000/api'; // Will be configurable later
 
@@ -114,6 +121,11 @@ class ApiService {
 
   async searchTeams(query: string): Promise<Team[]> {
     return this.fetchData<Team[]>(`/teams/search?q=${encodeURIComponent(query)}`);
+  }
+
+  async getUserTeam(teamId: number, event?: number): Promise<UserTeamResponse> {
+    const params = event ? `?event=${event}` : '';
+    return this.fetchData<UserTeamResponse>(`/user-teams/${teamId}${params}`);
   }
 }
 
