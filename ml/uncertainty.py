@@ -1,31 +1,52 @@
-"""Uncertainty estimation utilities for points prediction outputs."""
-
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence
 
-import numpy as np
-import pandas as pd
-
-
-def _to_float(value: float | np.floating | np.ndarray) -> float:
-    """Cast numpy scalar types to builtin ``float`` values."""
-
-    if isinstance(value, np.ndarray):
-        if value.size == 0:
-            return float("nan")
-        value = value.item()
-    if isinstance(value, np.generic):
-        return float(value.item())
-    return float(value)
+from .utils import Dataset, to_float
 
 
-def _as_series(values: Iterable[float]) -> pd.Series:
-    """Convert iterable of numbers into a numeric Series without mutating caller data."""
+def _clean_residuals(values: Iterable[float]) -> List[float]:
+    cleaned: List[float] = []
+    for value in values:
+        numeric = to_float(value)
+        if not math.isnan(numeric):
+            cleaned.append(numeric)
+    return cleaned
 
-    series = pd.Series(list(values), dtype="float64")
-    return series.dropna()
+
+def _quantile(values: List[float], q: float) -> float:
+    if not values:
+        return float("nan")
+    ordered = sorted(values)
+    position = q * (len(ordered) - 1)
+    lower = int(math.floor(position))
+    upper = int(math.ceil(position))
+    if lower == upper:
+        return ordered[lower]
+    weight = position - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
+
+
+def _median_absolute_deviation(values: List[float]) -> float:
+    if not values:
+        return 0.0
+    median = _quantile(values, 0.5)
+    deviations = [abs(value - median) for value in values]
+    return _quantile(deviations, 0.5)
+
+
+def _mean(values: List[float]) -> float:
+    return sum(values) / len(values) if values else float("nan")
+
+
+def _stdev(values: List[float]) -> float:
+    if len(values) <= 1:
+        return 0.0
+    mean = _mean(values)
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return math.sqrt(variance)
 
 
 @dataclass
@@ -41,37 +62,50 @@ class ResidualIntervalEstimator:
 
     def fit(
         self,
-        frame: pd.DataFrame,
+        records: Dataset,
         *,
         actual_column: str = "actual_points",
         predicted_column: str = "predicted_points",
     ) -> "ResidualIntervalEstimator":
-        """Learn residual-based calibration statistics from a labelled dataset."""
-
-        if frame.empty or actual_column not in frame.columns or predicted_column not in frame.columns:
+        if not records:
             self._global_stats = {}
             self._group_stats = {}
             self._error_thresholds = {}
             return self
 
-        residuals = _as_series(frame[actual_column] - frame[predicted_column])
+        residuals = _clean_residuals(
+            to_float(row.get(actual_column)) - to_float(row.get(predicted_column))
+            for row in records
+        )
+        if not residuals:
+            self._global_stats = {}
+            self._group_stats = {}
+            self._error_thresholds = {}
+            return self
+
         self._global_stats = self._build_stats(residuals)
         self._error_thresholds = self._compute_error_thresholds(residuals)
 
         self._group_stats = {}
-        if self.group_column and self.group_column in frame.columns:
-            for group_value, group_df in frame.groupby(self.group_column):
-                stats = self._build_stats(
-                    _as_series(group_df[actual_column] - group_df[predicted_column])
-                )
+        if self.group_column:
+            grouped: Dict[object, List[float]] = {}
+            for row in records:
+                if self.group_column not in row:
+                    continue
+                actual = to_float(row.get(actual_column))
+                predicted = to_float(row.get(predicted_column))
+                if math.isnan(actual) or math.isnan(predicted):
+                    continue
+                group_value = row[self.group_column]
+                grouped.setdefault(group_value, []).append(actual - predicted)
+            for group_value, values in grouped.items():
+                stats = self._build_stats(_clean_residuals(values))
                 if stats:
                     self._group_stats[group_value] = stats
 
         return self
 
     def describe(self) -> Dict[str, object]:
-        """Return a serialisable summary of the learned calibration statistics."""
-
         description: Dict[str, object] = {}
         if self._global_stats:
             description["confidence_levels"] = [float(level) for level in self.confidence_levels]
@@ -82,115 +116,124 @@ class ResidualIntervalEstimator:
             }
         if self._error_thresholds:
             description["error_thresholds"] = {
-                name: _to_float(value) for name, value in self._error_thresholds.items()
+                name: float(value) for name, value in self._error_thresholds.items()
             }
         return description
 
-    def apply(self, frame: pd.DataFrame, *, predicted_column: str = "predicted_points") -> pd.DataFrame:
-        """Augment a prediction frame with calibrated intervals and risk bands."""
+    def apply(self, records: Dataset, *, predicted_column: str = "predicted_points") -> Dataset:
+        if not records or not self._global_stats:
+            return records
 
-        if frame.empty or not self._global_stats:
-            return frame
-
-        result = frame.copy()
         level_keys = self._level_keys()
         if not self._global_stats.get("levels"):
-            return result
+            return records
 
-        size = len(result)
-        group_series = result[self.group_column] if self.group_column in result.columns else None
+        result: Dataset = [dict(row) for row in records]
+        group_values = [row.get(self.group_column) for row in result]
 
+        lower_bounds: Dict[int, List[float]] = {}
+        upper_bounds: Dict[int, List[float]] = {}
         for level_key in level_keys:
-            bounds = self._bounds_for_group(level_key, group_series, size)
+            lower, upper = self._bounds_for_group(level_key, group_values)
+            lower_bounds[level_key] = lower
+            upper_bounds[level_key] = upper
             lower_col = f"{predicted_column}_lower_p{level_key}"
             upper_col = f"{predicted_column}_upper_p{level_key}"
-            result[lower_col] = result[predicted_column] + bounds["lower"]
-            result[upper_col] = result[predicted_column] + bounds["upper"]
+            for row, lower_offset, upper_offset in zip(result, lower, upper):
+                predicted = to_float(row.get(predicted_column))
+                if math.isnan(predicted):
+                    row[lower_col] = float("nan")
+                    row[upper_col] = float("nan")
+                else:
+                    row[lower_col] = predicted + lower_offset
+                    row[upper_col] = predicted + upper_offset
 
         highest_key = level_keys[-1]
-        highest_bounds = self._bounds_for_group(highest_key, group_series, size)
+        expected_errors: List[float] = []
+        for lower, upper in zip(lower_bounds[highest_key], upper_bounds[highest_key]):
+            if math.isnan(lower) or math.isnan(upper):
+                expected_errors.append(float("nan"))
+            else:
+                expected_errors.append((upper - lower) / 2.0)
         error_col = f"{predicted_column}_expected_error_p{highest_key}"
-        result[error_col] = (highest_bounds["upper"] - highest_bounds["lower"]) / 2.0
+        for row, value in zip(result, expected_errors):
+            row[error_col] = value
 
         if self._error_thresholds:
-            result["risk_band"] = self._classify_risk(result[error_col])
+            classifications = self._classify_risk(expected_errors)
+            for row, risk in zip(result, classifications):
+                row["risk_band"] = risk
 
         return result
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
     def _level_keys(self) -> List[int]:
         return sorted({int(round(level * 100)) for level in self.confidence_levels})
 
     def _bounds_for_group(
         self,
         level_key: int,
-        group_series: Optional[pd.Series],
-        size: int,
-    ) -> Mapping[str, np.ndarray]:
-        global_levels: Mapping[int, Mapping[str, float]] = self._global_stats.get("levels", {})
-        global_bounds = global_levels.get(level_key)
+        group_values: List[object],
+    ) -> tuple[List[float], List[float]]:
+        levels: Mapping[int, Mapping[str, float]] = self._global_stats.get("levels", {})  # type: ignore[arg-type]
+        global_bounds = levels.get(level_key)
         if global_bounds is None:
-            lower = np.full(size, np.nan)
-            upper = np.full(size, np.nan)
-            return {"lower": lower, "upper": upper}
+            size = len(group_values)
+            return [float("nan")] * size, [float("nan")] * size
 
-        lower_default = _to_float(global_bounds["lower"])
-        upper_default = _to_float(global_bounds["upper"])
+        lower_default = float(global_bounds["lower"])
+        upper_default = float(global_bounds["upper"])
 
-        if group_series is None or group_series.empty or not self._group_stats:
-            lower = np.full(size, lower_default)
-            upper = np.full(size, upper_default)
-            return {"lower": lower, "upper": upper}
+        lower: List[float] = []
+        upper: List[float] = []
+        for group in group_values:
+            stats = self._group_stats.get(group)
+            if stats:
+                group_levels = stats.get("levels", {})
+                if isinstance(group_levels, Mapping) and level_key in group_levels:
+                    bounds = group_levels[level_key]
+                    lower.append(float(bounds["lower"]))
+                    upper.append(float(bounds["upper"]))
+                    continue
+            lower.append(lower_default)
+            upper.append(upper_default)
 
-        lower_map: MutableMapping[object, float] = {}
-        upper_map: MutableMapping[object, float] = {}
-        for group_value, stats in self._group_stats.items():
-            levels = stats.get("levels", {})
-            if level_key not in levels:
-                continue
-            bounds = levels[level_key]
-            lower_map[group_value] = _to_float(bounds["lower"])
-            upper_map[group_value] = _to_float(bounds["upper"])
+        return lower, upper
 
-        lower_series = group_series.map(lower_map).fillna(lower_default)
-        upper_series = group_series.map(upper_map).fillna(upper_default)
-        return {"lower": lower_series.to_numpy(), "upper": upper_series.to_numpy()}
-
-    def _classify_risk(self, expected_error: pd.Series) -> pd.Series:
-        values = expected_error.fillna(expected_error.median())
+    def _classify_risk(self, expected_errors: List[float]) -> List[str]:
         low = self._error_thresholds.get("low")
         medium = self._error_thresholds.get("medium")
+        high = self._error_thresholds.get("high")
         classifications: List[str] = []
-        for value in values:
-            if np.isnan(value):
+        for value in expected_errors:
+            if math.isnan(value):
                 classifications.append("unknown")
             elif low is not None and value <= low:
                 classifications.append("low")
             elif medium is not None and value <= medium:
                 classifications.append("medium")
+            elif high is not None and value <= high:
+                classifications.append("high")
             else:
                 classifications.append("high")
-        return pd.Series(classifications, index=expected_error.index)
+        return classifications
 
-    def _build_stats(self, residuals: pd.Series) -> Dict[str, object]:
-        if residuals.empty:
+    def _build_stats(self, residuals: List[float]) -> Dict[str, object]:
+        if not residuals:
             return {}
 
         stats: Dict[str, object] = {
-            "count": int(residuals.size),
-            "mean": _to_float(residuals.mean()),
-            "std": _to_float(residuals.std(ddof=1)) if residuals.size > 1 else 0.0,
-            "mad": _to_float(np.median(np.abs(residuals - np.median(residuals)))),
+            "count": len(residuals),
+            "mean": _mean(residuals),
+            "std": _stdev(residuals),
+            "mad": _median_absolute_deviation(residuals),
         }
 
         levels: Dict[int, Dict[str, float]] = {}
         for level_key in self._level_keys():
             lower_prob = max(min((1 - level_key / 100.0) / 2.0, 0.5), 0.0)
             upper_prob = 1 - lower_prob
-            lower = _to_float(residuals.quantile(lower_prob))
-            upper = _to_float(residuals.quantile(upper_prob))
+            lower = _quantile(residuals, lower_prob)
+            upper = _quantile(residuals, upper_prob)
             levels[level_key] = {
                 "lower": lower,
                 "upper": upper,
@@ -198,28 +241,25 @@ class ResidualIntervalEstimator:
             }
         stats["levels"] = levels
 
-        abs_residuals = residuals.abs()
+        abs_residuals = [abs(value) for value in residuals]
         stats["absolute_error_quantiles"] = {
-            "p50": _to_float(abs_residuals.quantile(0.5)),
-            "p80": _to_float(abs_residuals.quantile(0.8)),
-            "p95": _to_float(abs_residuals.quantile(0.95)),
+            "p50": _quantile(abs_residuals, 0.5),
+            "p80": _quantile(abs_residuals, 0.8),
+            "p95": _quantile(abs_residuals, 0.95),
         }
 
         return stats
 
-    def _compute_error_thresholds(self, residuals: pd.Series) -> Dict[str, float]:
-        abs_residuals = residuals.abs()
-        if abs_residuals.empty:
+    def _compute_error_thresholds(self, residuals: List[float]) -> Dict[str, float]:
+        abs_residuals = [abs(value) for value in residuals]
+        if not abs_residuals:
             return {}
         return {
-            "low": _to_float(abs_residuals.quantile(0.33)),
-            "medium": _to_float(abs_residuals.quantile(0.66)),
-            "high": _to_float(abs_residuals.quantile(0.9)),
+            "low": _quantile(abs_residuals, 0.33),
+            "medium": _quantile(abs_residuals, 0.66),
+            "high": _quantile(abs_residuals, 0.9),
         }
 
     @staticmethod
     def _normalise_key(value: object) -> object:
-        if isinstance(value, np.generic):
-            return value.item()
         return value
-

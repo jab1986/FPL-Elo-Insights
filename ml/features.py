@@ -1,13 +1,16 @@
-"""Feature engineering utilities for the ML pipeline."""
+"""Feature engineering utilities for the ML pipeline without third-party dependencies."""
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Sequence, Tuple
-
-import numpy as np
-import pandas as pd
+import math
+from typing import Dict, Iterable, List, Mapping, MutableMapping, Sequence, Tuple
 
 from .config import PipelineConfig
+from .utils import Dataset, is_nan, sort_records, to_float, to_int
+
+
+def _mean(values: List[float]) -> float:
+    return sum(values) / len(values) if values else float("nan")
 
 _NUMERIC_BASE_COLUMNS = [
     "gameweek",
@@ -37,6 +40,7 @@ _NUMERIC_BASE_COLUMNS = [
     "creativity",
     "threat",
     "ict_index",
+    "event_points",
 ]
 
 _POSITION_MAPPING = {
@@ -49,170 +53,219 @@ _POSITION_MAPPING = {
 _RESULT_MAPPING = {"W": 1, "D": 0, "L": -1}
 
 
-def _coerce_numeric_columns(frame: pd.DataFrame, columns: Iterable[str]) -> None:
-    """Convert selected columns to numeric types in-place."""
-
+def _coerce_numeric(record: MutableMapping[str, object], columns: Iterable[str]) -> None:
     for column in columns:
-        if column in frame.columns:
-            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+        if column in record:
+            record[column] = to_float(record[column])
 
 
-def _encode_position(frame: pd.DataFrame) -> None:
-    """Add a numeric representation of the player's position."""
-
-    if "position" not in frame.columns:
-        return
-
-    frame["position_code"] = frame["position"].map(_POSITION_MAPPING).fillna(-1).astype(int)
+def _encode_position(record: MutableMapping[str, object]) -> None:
+    position = record.get("position")
+    record["position_code"] = _POSITION_MAPPING.get(position, -1)
 
 
-def _encode_match_result(frame: pd.DataFrame) -> None:
-    """Represent match result as an ordinal feature."""
-
-    if "result" not in frame.columns:
-        return
-
-    frame["result_code"] = frame["result"].map(_RESULT_MAPPING).fillna(0).astype(int)
+def _encode_match_result(record: MutableMapping[str, object]) -> None:
+    result = record.get("result")
+    record["result_code"] = _RESULT_MAPPING.get(result, 0)
 
 
-def _add_boolean_feature(frame: pd.DataFrame, column: str, true_value: int = 1, false_value: int = 0) -> None:
-    """Normalise boolean-like columns to integer features."""
-
-    if column not in frame.columns:
-        return
-
-    mapping = {True: true_value, False: false_value, "True": true_value, "False": false_value}
-    frame[column] = frame[column].map(mapping).fillna(frame[column]).fillna(false_value)
-    frame[column] = frame[column].astype(int)
-
-
-def _create_group(frame: pd.DataFrame) -> pd.core.groupby.DataFrameGroupBy:
-    """Helper to group by season and player."""
-
-    return frame.groupby(["season", "player_id"], sort=False)
+def _normalise_boolean(record: MutableMapping[str, object], column: str) -> None:
+    value = record.get(column)
+    if isinstance(value, bool):
+        record[column] = int(value)
+    elif isinstance(value, str):
+        record[column] = 1 if value.lower() == "true" else 0 if value.lower() == "false" else 0
+    else:
+        record[column] = int(bool(value))
 
 
-def _add_lag_features(frame: pd.DataFrame, columns: Dict[str, Sequence[int]]) -> None:
-    """Add lagged features for each specified column."""
+def _add_difference_features(records: Dataset) -> None:
+    history: Dict[Tuple[object, object], Dict[str, float]] = {}
+    for record in records:
+        key = (record.get("season"), record.get("player_id"))
+        state = history.setdefault(key, {})
 
-    grouped = _create_group(frame)
-    for column, lags in columns.items():
-        if column not in frame.columns:
-            continue
-        for lag in lags:
-            frame[f"{column}_lag_{lag}"] = grouped[column].shift(lag)
+        transfers_in_event = to_float(record.get("transfers_in_event"))
+        transfers_out_event = to_float(record.get("transfers_out_event"))
+        if not math.isnan(transfers_in_event) and not math.isnan(transfers_out_event):
+            record["transfers_net_event"] = transfers_in_event - transfers_out_event
+        else:
+            record["transfers_net_event"] = 0.0
 
+        selected = to_float(record.get("selected_by_percent"))
+        if not math.isnan(selected) and not math.isnan(state.get("selected_by_percent", float("nan"))):
+            record["selected_by_percent_change"] = selected - state["selected_by_percent"]
+        else:
+            record["selected_by_percent_change"] = 0.0
 
-def _add_rolling_features(frame: pd.DataFrame, columns: Dict[str, Sequence[int]]) -> None:
-    """Add rolling mean features (using prior observations only)."""
+        now_cost = to_float(record.get("now_cost"))
+        if not math.isnan(now_cost) and not math.isnan(state.get("now_cost", float("nan"))):
+            record["now_cost_change"] = now_cost - state["now_cost"]
+        else:
+            record["now_cost_change"] = 0.0
 
-    grouped = _create_group(frame)
-    for column, windows in columns.items():
-        if column not in frame.columns:
-            continue
-        series = grouped[column]
-        for window in windows:
-            frame[f"{column}_rolling_{window}"] = series.transform(
-                lambda s, window=window: s.shift(1).rolling(window, min_periods=1).mean()
-            )
-
-
-def _add_differenced_features(frame: pd.DataFrame) -> None:
-    """Add net transfer and ownership change features."""
-
-    if {"transfers_in_event", "transfers_out_event"}.issubset(frame.columns):
-        frame["transfers_net_event"] = frame["transfers_in_event"] - frame["transfers_out_event"]
-
-    grouped = _create_group(frame)
-    if "selected_by_percent" in frame.columns:
-        frame["selected_by_percent_change"] = grouped["selected_by_percent"].diff()
-
-    if "now_cost" in frame.columns:
-        frame["now_cost_change"] = grouped["now_cost"].diff()
+        if not math.isnan(selected):
+            state["selected_by_percent"] = selected
+        if not math.isnan(now_cost):
+            state["now_cost"] = now_cost
 
 
-def _team_context_features(frame: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.DataFrame, List[str]]:
-    """Compute team and opponent context features for each appearance."""
+def _add_simple_diffs(record: MutableMapping[str, object]) -> None:
+    team_elo = to_float(record.get("team_elo"))
+    opponent_elo = to_float(record.get("opponent_elo"))
+    if not math.isnan(team_elo) and not math.isnan(opponent_elo):
+        record["elo_diff"] = team_elo - opponent_elo
+    else:
+        record["elo_diff"] = float("nan")
 
-    required = {"season", "gameweek", "team_id", "opponent_team_id"}
-    if not required.issubset(frame.columns):
-        return frame, []
+    team_score = to_float(record.get("team_score"))
+    opponent_score = to_float(record.get("opponent_score"))
+    if not math.isnan(team_score) and not math.isnan(opponent_score):
+        record["score_diff"] = team_score - opponent_score
+    else:
+        record["score_diff"] = float("nan")
 
+
+def _add_lag_features(records: Dataset, columns: Dict[str, Sequence[int]]) -> None:
+    histories: Dict[Tuple[object, object], Dict[str, List[float]]] = {}
+    for record in records:
+        key = (record.get("season"), record.get("player_id"))
+        player_history = histories.setdefault(key, {})
+        for column, lags in columns.items():
+            history = player_history.setdefault(column, [])
+            for lag in lags:
+                name = f"{column}_lag_{lag}"
+                if len(history) >= lag:
+                    value = history[-lag]
+                else:
+                    value = float("nan")
+                record[name] = value
+            value = to_float(record.get(column))
+            history.append(value)
+
+
+def _add_rolling_features(records: Dataset, columns: Dict[str, Sequence[int]]) -> None:
+    histories: Dict[Tuple[object, object], Dict[str, List[float]]] = {}
+    for record in records:
+        key = (record.get("season"), record.get("player_id"))
+        player_history = histories.setdefault(key, {})
+        for column, windows in columns.items():
+            history = player_history.setdefault(column, [])
+            for window in windows:
+                name = f"{column}_rolling_{window}"
+                if history:
+                    values = [value for value in history[-window:] if not is_nan(value)]
+                    record[name] = _mean(values)
+                else:
+                    record[name] = float("nan")
+            value = to_float(record.get(column))
+            history.append(value)
+
+
+def _team_context_features(records: Dataset, config: PipelineConfig) -> Tuple[List[str], List[str]]:
     aggregations = {
         "event_points": "team_event_points_mean",
         "expected_goal_involvements": "team_expected_goal_involvements_mean",
         "expected_goals_conceded": "team_expected_goals_conceded_mean",
         "ict_index": "team_ict_index_mean",
     }
-    available_aggs = {source: name for source, name in aggregations.items() if source in frame.columns}
-    if not available_aggs:
-        return frame, []
 
-    team_grouped = frame.groupby(["season", "team_id", "gameweek"], sort=False)
-    team_agg = team_grouped.agg({source: "mean" for source in available_aggs}).reset_index()
-    team_agg.rename(columns=available_aggs, inplace=True)
+    team_gameweek_values: Dict[Tuple[object, object, object], Dict[str, List[float]]] = {}
+    for record in records:
+        season = record.get("season")
+        team_id = record.get("team_id")
+        gameweek = record.get("gameweek")
+        if team_id is None or gameweek is None:
+            continue
+        key = (season, team_id, gameweek)
+        stats = team_gameweek_values.setdefault(key, {source: [] for source in aggregations})
+        for source in aggregations:
+            value = to_float(record.get(source))
+            if not math.isnan(value):
+                stats[source].append(value)
 
-    feature_columns: List[str] = []
-    for column in available_aggs.values():
-        history = team_agg.groupby(["season", "team_id"])[column]
-        lag_name = f"{column}_lag_1"
-        team_agg[lag_name] = history.shift(1)
-        feature_columns.append(lag_name)
-        for window in config.team_form_windows:
-            rolling_name = f"{column}_rolling_{window}"
-            team_agg[rolling_name] = history.shift(1).rolling(window, min_periods=1).mean()
-            feature_columns.append(rolling_name)
+    team_features: Dict[Tuple[object, object, object], Dict[str, float]] = {}
+    for key, stats in team_gameweek_values.items():
+        feature_row: Dict[str, float] = {}
+        for source, dest in aggregations.items():
+            values = stats.get(source, [])
+            feature_row[dest] = _mean(values)
+        team_features[key] = feature_row
 
-    merge_columns = ["season", "team_id", "gameweek"] + feature_columns
-    team_features = team_agg[merge_columns]
+    team_feature_names: List[str] = []
+    team_histories: Dict[Tuple[object, object], Dict[str, List[float]]] = {}
+    for (season, team_id, gameweek) in sorted(team_features.keys()):
+        key = (season, team_id)
+        summary = team_features[(season, team_id, gameweek)]
+        history = team_histories.setdefault(key, {name: [] for name in summary})
+        enriched: Dict[str, float] = {}
+        for name, current_value in summary.items():
+            enriched[name] = current_value
+            history_series = history.setdefault(name, [])
+            lag_name = f"{name}_lag_1"
+            if lag_name not in team_feature_names:
+                team_feature_names.append(lag_name)
+            enriched[lag_name] = history_series[-1] if history_series else float("nan")
+            for window in config.team_form_windows:
+                rolling_name = f"{name}_rolling_{window}"
+                if rolling_name not in team_feature_names:
+                    team_feature_names.append(rolling_name)
+                if history_series:
+                    values = [val for val in history_series[-window:] if not is_nan(val)]
+                    enriched[rolling_name] = _mean(values)
+                else:
+                    enriched[rolling_name] = float("nan")
+            history_series.append(current_value)
+        summary.update(enriched)
+        for candidate in summary.keys():
+            if candidate not in team_feature_names:
+                team_feature_names.append(candidate)
 
-    frame = frame.merge(team_features, on=["season", "team_id", "gameweek"], how="left")
+    opponent_feature_names = [name.replace("team_", "opponent_") for name in team_feature_names]
 
-    opponent_columns = {col: col.replace("team_", "opponent_") for col in feature_columns}
-    opponent_features = team_features.rename(
-        columns={"team_id": "opponent_team_id", **opponent_columns}
-    )
-    frame = frame.merge(
-        opponent_features,
-        on=["season", "opponent_team_id", "gameweek"],
-        how="left",
-    )
+    for record in records:
+        season = record.get("season")
+        team_id = record.get("team_id")
+        opponent_team_id = record.get("opponent_team_id")
+        gameweek = record.get("gameweek")
+        team_key = (season, team_id, gameweek)
+        opponent_key = (season, opponent_team_id, gameweek)
 
-    for column in feature_columns:
-        frame[column] = frame[column].fillna(0.0)
-    for column in opponent_columns.values():
-        frame[column] = frame[column].fillna(0.0)
+        features = team_features.get(team_key, {})
+        for name in team_feature_names:
+            record[name] = features.get(name, 0.0)
 
-    return frame, feature_columns + list(opponent_columns.values())
+        opponent_features = team_features.get(opponent_key, {})
+        for source, target in zip(team_feature_names, opponent_feature_names):
+            record[target] = opponent_features.get(source, 0.0)
+
+    return team_feature_names, opponent_feature_names
 
 
-def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.DataFrame, List[str]]:
+def engineer_features(raw: Iterable[Mapping[str, object]], config: PipelineConfig) -> Tuple[Dataset, List[str]]:
     """Prepare model features and return the dataset ready for training."""
 
-    frame = raw.copy()
-    _coerce_numeric_columns(frame, _NUMERIC_BASE_COLUMNS)
+    records = sort_records(raw, ["season", "player_id", "gameweek"])
 
-    frame["player_id"] = frame["player_id"].astype(int)
-    if "team_id" in frame.columns:
-        frame["team_id"] = frame["team_id"].astype(int)
-    if "opponent_team_id" in frame.columns:
-        frame["opponent_team_id"] = frame["opponent_team_id"].astype(int)
-    frame.sort_values(["season", "player_id", "gameweek"], inplace=True)
+    for record in records:
+        _coerce_numeric(record, _NUMERIC_BASE_COLUMNS)
+        player_id = to_int(record.get("player_id"))
+        if player_id is None:
+            record["player_id"] = -1
+        else:
+            record["player_id"] = player_id
+        if "team_id" in record:
+            team_id = to_int(record.get("team_id"))
+            record["team_id"] = team_id if team_id is not None else -1
+        if "opponent_team_id" in record:
+            opponent_team_id = to_int(record.get("opponent_team_id"))
+            record["opponent_team_id"] = opponent_team_id if opponent_team_id is not None else -1
+        _encode_position(record)
+        _encode_match_result(record)
+        _normalise_boolean(record, "is_home")
+        _add_simple_diffs(record)
 
-    _encode_position(frame)
-    _encode_match_result(frame)
-    _add_boolean_feature(frame, "is_home")
-    _add_differenced_features(frame)
-
-    for column in ("selected_by_percent_change", "now_cost_change", "transfers_net_event"):
-        if column in frame.columns:
-            frame[column] = frame[column].fillna(0)
-
-    if {"team_elo", "opponent_elo"}.issubset(frame.columns):
-        frame["elo_diff"] = frame["team_elo"] - frame["opponent_elo"]
-
-    if {"team_score", "opponent_score"}.issubset(frame.columns):
-        frame["score_diff"] = frame["team_score"] - frame["opponent_score"]
+    _add_difference_features(records)
 
     lag_config = {
         config.target: [1, 2],
@@ -227,7 +280,7 @@ def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.Dat
         "transfers_net_event": [1],
         "ep_next": [1],
     }
-    _add_lag_features(frame, lag_config)
+    _add_lag_features(records, lag_config)
 
     rolling_config = {
         config.target: config.event_point_windows,
@@ -235,12 +288,16 @@ def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.Dat
         "expected_goals_conceded": config.expectation_windows,
         "ict_index": config.expectation_windows,
     }
-    _add_rolling_features(frame, rolling_config)
+    _add_rolling_features(records, rolling_config)
 
-    frame, team_context_features = _team_context_features(frame, config)
+    team_features, opponent_features = _team_context_features(records, config)
 
-    frame["history_games"] = _create_group(frame).cumcount()
-    frame = frame[frame["history_games"] >= config.min_history_games].copy()
+    history_counts: Dict[Tuple[object, object], int] = {}
+    for record in records:
+        key = (record.get("season"), record.get("player_id"))
+        count = history_counts.get(key, 0)
+        record["history_games"] = count
+        history_counts[key] = count + 1
 
     feature_candidates = [
         "is_home",
@@ -274,30 +331,42 @@ def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.Dat
         "ict_index",
     ]
 
-    lagged_feature_sources = [
-        config.target,
-        "expected_goal_involvements",
-        "expected_goals_conceded",
-        "ict_index",
-    ]
-    for source in lagged_feature_sources:
-        for lag in lag_config.get(source, []):
+    for source, lags in lag_config.items():
+        for lag in lags:
             candidate = f"{source}_lag_{lag}"
             if candidate not in feature_candidates:
                 feature_candidates.append(candidate)
-
     for source, windows in rolling_config.items():
         for window in windows:
             candidate = f"{source}_rolling_{window}"
             if candidate not in feature_candidates:
                 feature_candidates.append(candidate)
 
-    feature_candidates.extend(team_context_features)
+    feature_candidates.extend(team_features)
+    feature_candidates.extend(opponent_features)
 
-    feature_columns = [column for column in feature_candidates if column in frame.columns]
+    feature_columns = feature_candidates
 
-    frame = frame.dropna(subset=[config.target] + [col for col in feature_columns if "lag" in col or "rolling" in col])
-    frame = frame.replace([np.inf, -np.inf], np.nan).dropna(subset=feature_columns + [config.target])
+    filtered: Dataset = []
+    for record in records:
+        if record.get("history_games", 0) < config.min_history_games:
+            continue
+        target_value = to_float(record.get(config.target))
+        if math.isnan(target_value):
+            continue
+        invalid = False
+        for column in feature_columns:
+            value = record.get(column)
+            if isinstance(value, (int, float)):
+                if math.isnan(float(value)):
+                    invalid = True
+                    break
+            elif value is None:
+                invalid = True
+                break
+        if invalid:
+            continue
+        record[config.target] = target_value
+        filtered.append(dict(record))
 
-    return frame.reset_index(drop=True), feature_columns
-
+    return filtered, feature_columns

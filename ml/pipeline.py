@@ -1,14 +1,12 @@
-"""Points prediction pipeline for Fantasy Premier League data."""
+"""Points prediction pipeline for Fantasy Premier League data without pandas."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
-
-import numpy as np
-import pandas as pd
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .config import PipelineConfig
 from .data import load_merged_gameweek_data
@@ -16,6 +14,7 @@ from .features import engineer_features
 from .model import RidgeRegressionModel
 from . import metrics as metrics_module
 from .uncertainty import ResidualIntervalEstimator
+from .utils import Dataset, clone_records, extract_matrix, to_float
 
 
 @dataclass
@@ -28,7 +27,7 @@ class PipelineResult:
     test_rows: int
     metrics: Dict[str, Dict[str, float]]
     model: RidgeRegressionModel
-    predictions: Dict[str, pd.DataFrame]
+    predictions: Dict[str, Dataset]
     cross_validation: Optional[List[Dict[str, Any]]] = None
     diagnostics: Optional[Dict[str, Any]] = None
     hyperparameters: Optional[Dict[str, Any]] = None
@@ -41,7 +40,7 @@ class PipelineResult:
         coefficients_path = output_dir / "points_baseline_coefficients.json"
         predictions_path = output_dir / "points_baseline_predictions.csv"
 
-        metrics_payload = {
+        metrics_payload: Dict[str, Any] = {
             "config": {
                 "seasons": list(self.config.seasons),
                 "min_gameweek": self.config.min_gameweek,
@@ -66,16 +65,26 @@ class PipelineResult:
         coefficients_payload = self.model.to_dict(self.features)
         coefficients_path.write_text(json.dumps(coefficients_payload, indent=2))
 
-        prediction_frames = []
-        for split_name, frame in self.predictions.items():
-            if frame.empty:
-                continue
-            enriched = frame.copy()
-            enriched["split"] = split_name
-            prediction_frames.append(enriched)
-        if prediction_frames:
-            combined = pd.concat(prediction_frames, ignore_index=True)
-            combined.to_csv(predictions_path, index=False)
+        combined: List[Dict[str, Any]] = []
+        for split_name, records in self.predictions.items():
+            for row in records:
+                entry = dict(row)
+                entry["split"] = split_name
+                combined.append(entry)
+
+        if combined:
+            fieldnames = sorted({key for row in combined for key in row.keys()})
+            with predictions_path.open("w", encoding="utf-8", newline="") as handle:
+                handle.write(",".join(fieldnames) + "\n")
+                for row in combined:
+                    values = []
+                    for field in fieldnames:
+                        value = row.get(field, "")
+                        if isinstance(value, float) and math.isnan(value):
+                            values.append("")
+                        else:
+                            values.append(str(value))
+                    handle.write(",".join(values) + "\n")
 
 
 class PointsPredictionPipeline:
@@ -85,34 +94,32 @@ class PointsPredictionPipeline:
         self.config = config or PipelineConfig()
 
     def run(self) -> PipelineResult:
-        """Execute the end-to-end pipeline."""
-
         raw = load_merged_gameweek_data(self.config)
         dataset, feature_columns = engineer_features(raw, self.config)
 
-        if dataset.empty:
+        if not dataset:
             raise ValueError("Feature engineering resulted in an empty dataset")
 
-        train_df, test_df = self._split_train_test(dataset)
-        if train_df.empty:
+        train_records, test_records = self._split_train_test(dataset)
+        if not train_records:
             raise ValueError("Training set is empty after applying the holdout strategy")
 
-        selected_alpha, tuning_summary = self._tune_hyperparameters(train_df, feature_columns)
-        model = self._train_model(train_df, feature_columns, alpha=selected_alpha)
-        predictions: Dict[str, pd.DataFrame] = {}
+        selected_alpha, tuning_summary = self._tune_hyperparameters(train_records, feature_columns)
+        model = self._train_model(train_records, feature_columns, alpha=selected_alpha)
+        predictions: Dict[str, Dataset] = {}
         metrics: Dict[str, Dict[str, float]] = {}
         diagnostics: Dict[str, Any] = {}
 
         train_prediction_frame, train_metrics, train_diagnostics = self._score_split(
             model,
-            train_df,
+            train_records,
             feature_columns,
             dataset,
             extra_columns=("position", "team_id", "opponent_team_id"),
         )
 
         uncertainty_estimator: Optional[ResidualIntervalEstimator] = None
-        if not train_prediction_frame.empty:
+        if train_prediction_frame:
             uncertainty_estimator = ResidualIntervalEstimator(
                 confidence_levels=self.config.uncertainty_confidence_levels
             ).fit(train_prediction_frame)
@@ -129,13 +136,13 @@ class PointsPredictionPipeline:
 
         test_prediction_frame, test_metrics, test_diagnostics = self._score_split(
             model,
-            test_df,
+            test_records,
             feature_columns,
             dataset,
             extra_columns=("position", "team_id", "opponent_team_id"),
         )
 
-        if uncertainty_estimator is not None and not test_prediction_frame.empty:
+        if uncertainty_estimator is not None and test_prediction_frame:
             test_prediction_frame = uncertainty_estimator.apply(test_prediction_frame)
 
         predictions["test"] = test_prediction_frame
@@ -156,8 +163,8 @@ class PointsPredictionPipeline:
         result = PipelineResult(
             config=self.config,
             features=feature_columns,
-            train_rows=len(train_df),
-            test_rows=len(test_df),
+            train_rows=len(train_records),
+            test_rows=len(test_records),
             metrics=metrics,
             model=model,
             predictions=predictions,
@@ -168,57 +175,62 @@ class PointsPredictionPipeline:
         result.save(self.config.resolved_output_dir())
         return result
 
-    def _split_train_test(self, dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """Perform a time-based split, keeping the latest gameweeks for testing."""
-
+    def _split_train_test(self, dataset: Dataset) -> Tuple[Dataset, Dataset]:
         holdout = max(self.config.holdout_gameweeks, 0)
         if holdout == 0:
-            return dataset, dataset.iloc[0:0]
+            return clone_records(dataset), []
 
-        max_gameweek_per_season = dataset.groupby("season")["gameweek"].transform("max")
-        test_mask = dataset["gameweek"] >= (max_gameweek_per_season - holdout + 1)
-        train_df = dataset.loc[~test_mask].reset_index(drop=True)
-        test_df = dataset.loc[test_mask].reset_index(drop=True)
-        if train_df.empty:
-            return dataset.reset_index(drop=True), dataset.iloc[0:0]
-        return train_df, test_df
+        max_gameweek: Dict[object, int] = {}
+        for row in dataset:
+            season = row["season"]
+            gameweek = int(row["gameweek"])
+            max_gameweek[season] = max(max_gameweek.get(season, gameweek), gameweek)
+
+        train: Dataset = []
+        test: Dataset = []
+        for row in dataset:
+            season = row["season"]
+            threshold = max_gameweek[season] - holdout + 1
+            if row["gameweek"] >= threshold:
+                test.append(dict(row))
+            else:
+                train.append(dict(row))
+
+        if not train:
+            return clone_records(dataset), []
+        return train, test
 
     def _train_model(
         self,
-        dataset: pd.DataFrame,
+        dataset: Dataset,
         feature_columns: List[str],
         alpha: Optional[float] = None,
     ) -> RidgeRegressionModel:
-        """Fit the ridge regression model using the prepared dataset."""
-
         model_alpha = self.config.model_alpha if alpha is None else float(alpha)
         model = RidgeRegressionModel(alpha=model_alpha)
-        features = dataset[feature_columns].to_numpy(dtype=float)
-        target = dataset[self.config.target].to_numpy(dtype=float)
+        features = extract_matrix(dataset, feature_columns)
+        target = [to_float(row.get(self.config.target)) for row in dataset]
         model.fit(features, target)
         return model
 
     def _compute_metrics(
         self,
         model: RidgeRegressionModel,
-        dataset: pd.DataFrame,
+        dataset: Dataset,
         feature_columns: List[str],
     ) -> Dict[str, float]:
-        """Calculate MAE, RMSE and R² for a dataset."""
-
-        features = dataset[feature_columns].to_numpy(dtype=float)
-        actual = dataset[self.config.target].to_numpy(dtype=float)
+        if not dataset:
+            return {}
+        features = extract_matrix(dataset, feature_columns)
+        actual = [to_float(row.get(self.config.target)) for row in dataset]
         predicted = model.predict(features)
-
         return metrics_module.regression_metrics(actual, predicted)
 
     def _tune_hyperparameters(
-        self, dataset: pd.DataFrame, feature_columns: List[str]
+        self, dataset: Dataset, feature_columns: List[str]
     ) -> tuple[float, Optional[Dict[str, Any]]]:
-        """Select the ridge alpha via lightweight rolling validation."""
-
         default_alpha = float(self.config.model_alpha)
-        if dataset.empty or not self.config.alpha_grid or self.config.tuning_folds <= 0:
+        if not dataset or not self.config.alpha_grid or self.config.tuning_folds <= 0:
             return default_alpha, None
 
         metric_name = self.config.tuning_metric
@@ -233,7 +245,7 @@ class PointsPredictionPipeline:
             if not metric_values:
                 continue
 
-            aggregated = float(np.mean(metric_values))
+            aggregated = sum(metric_values) / len(metric_values)
             summary_records.append(
                 {
                     "alpha": float(alpha),
@@ -252,22 +264,20 @@ class PointsPredictionPipeline:
         summary: Dict[str, Any] = {
             "metric": metric_name,
             "results": summary_records,
+            "selected_alpha": float(best_alpha),
         }
-        summary["selected_alpha"] = float(best_alpha)
         return best_alpha, summary
 
     def _extract_metric_values(
         self, metrics: List[Dict[str, Any]], metric_name: str
     ) -> List[float]:
-        """Return valid metric values from fold evaluations."""
-
         values: List[float] = []
         for entry in metrics:
             value = entry.get(metric_name)
             if value is None:
                 continue
             numeric = float(value)
-            if np.isnan(numeric):
+            if math.isnan(numeric):
                 continue
             if metric_name == "bias":
                 numeric = abs(numeric)
@@ -275,8 +285,6 @@ class PointsPredictionPipeline:
         return values
 
     def _metric_orientation(self, metric_name: str) -> str:
-        """Return whether higher or lower values are preferred for a metric."""
-
         lower_is_better = {"mae", "rmse", "median_ae", "mape", "bias"}
         higher_is_better = {"r2", "pearson_r"}
         if metric_name in lower_is_better:
@@ -287,8 +295,6 @@ class PointsPredictionPipeline:
 
     @staticmethod
     def _is_better(score: float, best_score: float, orientation: str) -> bool:
-        """Compare metric scores according to the desired orientation."""
-
         if orientation == "lower":
             return score < best_score - 1e-9
         if orientation == "higher":
@@ -296,18 +302,17 @@ class PointsPredictionPipeline:
         raise ValueError(f"Unknown orientation: {orientation}")
 
     def _evaluate_alpha(
-        self, dataset: pd.DataFrame, feature_columns: List[str], alpha: float
+        self, dataset: Dataset, feature_columns: List[str], alpha: float
     ) -> List[Dict[str, Any]]:
-        """Compute rolling validation metrics for a specific alpha."""
-
         results: List[Dict[str, Any]] = []
         folds = max(0, self.config.tuning_folds)
         if folds <= 0:
             return results
 
-        for season, season_df in dataset.groupby("season"):
-            season_df = season_df.sort_values("gameweek")
-            gameweeks = np.sort(season_df["gameweek"].unique())
+        seasons = sorted({row["season"] for row in dataset})
+        for season in seasons:
+            season_records = [row for row in dataset if row["season"] == season]
+            gameweeks = sorted({row["gameweek"] for row in season_records})
             if len(gameweeks) <= 1:
                 continue
 
@@ -317,15 +322,12 @@ class PointsPredictionPipeline:
                 train_gws = gameweeks[:train_end]
                 test_gws = gameweeks[train_end : train_end + fold_size]
 
-                if (
-                    len(train_gws) < self.config.tuning_min_train_gameweeks
-                    or test_gws.size == 0
-                ):
+                if len(train_gws) < self.config.tuning_min_train_gameweeks or not test_gws:
                     continue
 
-                train_df = season_df[season_df["gameweek"].isin(train_gws)]
-                test_df = season_df[season_df["gameweek"].isin(test_gws)]
-                if train_df.empty or test_df.empty:
+                train_df = [row for row in season_records if row["gameweek"] in train_gws]
+                test_df = [row for row in season_records if row["gameweek"] in test_gws]
+                if not train_df or not test_df:
                     continue
 
                 model = self._train_model(train_df, feature_columns, alpha=alpha)
@@ -348,38 +350,36 @@ class PointsPredictionPipeline:
     def _build_prediction_frame(
         self,
         model: RidgeRegressionModel,
-        dataset: pd.DataFrame,
+        dataset: Dataset,
         feature_columns: List[str],
         extra_columns: Sequence[str] | None = None,
-    ) -> pd.DataFrame:
-        """Create a dataframe containing actual vs predicted points for a split."""
+    ) -> Dataset:
+        if not dataset:
+            return []
 
-        if dataset.empty:
-            return pd.DataFrame(columns=["season", "gameweek", "player_id", "actual_points", "predicted_points"])
-
-        features = dataset[feature_columns].to_numpy(dtype=float)
+        features = extract_matrix(dataset, feature_columns)
         predictions = model.predict(features)
-
         base_columns = ["season", "gameweek", "player_id"]
-        if extra_columns:
-            for column in extra_columns:
-                if column in dataset.columns and column not in base_columns:
-                    base_columns.append(column)
-        frame = dataset[base_columns].copy()
-        frame["actual_points"] = dataset[self.config.target].to_numpy(dtype=float)
-        frame["predicted_points"] = predictions
-        return frame.reset_index(drop=True)
+        frame: Dataset = []
+        for row, predicted in zip(dataset, predictions):
+            entry: Dict[str, Any] = {column: row[column] for column in base_columns if column in row}
+            if extra_columns:
+                for column in extra_columns:
+                    if column in row and column not in entry:
+                        entry[column] = row[column]
+            entry["actual_points"] = to_float(row.get(self.config.target))
+            entry["predicted_points"] = float(predicted)
+            frame.append(entry)
+        return frame
 
     def _score_split(
         self,
         model: RidgeRegressionModel,
-        dataset: pd.DataFrame,
+        dataset: Dataset,
         feature_columns: List[str],
-        history: pd.DataFrame,
+        history: Dataset,
         extra_columns: Sequence[str] | None = None,
-    ) -> tuple[pd.DataFrame, Dict[str, float], Dict[str, Any]]:
-        """Generate predictions, metrics and diagnostics for a dataset split."""
-
+    ) -> tuple[Dataset, Dict[str, float], Dict[str, Any]]:
         prediction_frame = self._build_prediction_frame(
             model,
             dataset,
@@ -389,10 +389,10 @@ class PointsPredictionPipeline:
         metrics: Dict[str, float] = {}
         diagnostics: Dict[str, Any] = {}
 
-        if not prediction_frame.empty:
+        if prediction_frame:
             metrics = metrics_module.regression_metrics(
-                prediction_frame["actual_points"].to_numpy(),
-                prediction_frame["predicted_points"].to_numpy(),
+                [row["actual_points"] for row in prediction_frame],
+                [row["predicted_points"] for row in prediction_frame],
             )
             diagnostics = self._build_diagnostics(dataset, prediction_frame, history)
 
@@ -400,18 +400,16 @@ class PointsPredictionPipeline:
 
     def _build_diagnostics(
         self,
-        dataset: pd.DataFrame,
-        prediction_frame: pd.DataFrame,
-        history: pd.DataFrame,
+        dataset: Dataset,
+        prediction_frame: Dataset,
+        history: Dataset,
     ) -> Dict[str, Any]:
-        """Compile additional diagnostic information for a dataset split."""
-
-        if dataset.empty or prediction_frame.empty:
+        if not dataset or not prediction_frame:
             return {}
 
         diagnostics: Dict[str, Any] = {
             "sample_count": int(len(dataset)),
-            "target_mean": float(dataset[self.config.target].mean()),
+            "target_mean": sum([to_float(row.get(self.config.target)) for row in dataset]) / len(dataset),
         }
 
         baselines = metrics_module.compute_baseline_metrics(dataset, self.config.target, history=history)
@@ -420,7 +418,7 @@ class PointsPredictionPipeline:
 
         breakdowns: Dict[str, Any] = {}
         for column in ("position", "season"):
-            if column in prediction_frame.columns:
+            if any(column in row for row in prediction_frame):
                 breakdown = metrics_module.grouped_metrics(
                     prediction_frame,
                     actual_column="actual_points",
@@ -436,17 +434,16 @@ class PointsPredictionPipeline:
         return diagnostics
 
     def _run_cross_validation(
-        self, dataset: pd.DataFrame, feature_columns: List[str]
+        self, dataset: Dataset, feature_columns: List[str]
     ) -> Optional[List[Dict[str, Any]]]:
-        """Perform rolling-origin cross validation per season."""
-
         if self.config.cross_validation_folds <= 0:
             return None
 
         results: List[Dict[str, Any]] = []
-        for season, season_df in dataset.groupby("season"):
-            season_df = season_df.sort_values("gameweek")
-            gameweeks = np.sort(season_df["gameweek"].unique())
+        seasons = sorted({row["season"] for row in dataset})
+        for season in seasons:
+            season_records = [row for row in dataset if row["season"] == season]
+            gameweeks = sorted({row["gameweek"] for row in season_records})
             if len(gameweeks) <= 1:
                 continue
 
@@ -456,15 +453,12 @@ class PointsPredictionPipeline:
                 train_gws = gameweeks[:train_end]
                 test_gws = gameweeks[train_end : train_end + fold_size]
 
-                if (
-                    len(train_gws) < self.config.cv_min_train_gameweeks
-                    or test_gws.size == 0
-                ):
+                if len(train_gws) < self.config.cv_min_train_gameweeks or not test_gws:
                     continue
 
-                train_df = season_df[season_df["gameweek"].isin(train_gws)]
-                test_df = season_df[season_df["gameweek"].isin(test_gws)]
-                if train_df.empty or test_df.empty:
+                train_df = [row for row in season_records if row["gameweek"] in train_gws]
+                test_df = [row for row in season_records if row["gameweek"] in test_gws]
+                if not train_df or not test_df:
                     continue
 
                 model = self._train_model(train_df, feature_columns)
@@ -488,4 +482,3 @@ if __name__ == "__main__":
     pipeline = PointsPredictionPipeline()
     result = pipeline.run()
     print(json.dumps(result.metrics, indent=2))
-

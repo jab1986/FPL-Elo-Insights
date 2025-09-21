@@ -7,15 +7,16 @@ features, richer evaluation and persisted predictions for downstream analysis.
 ## What was built
 
 - **Data loading** – merges the public CSV exports (`merged_gw.csv`) for the configured seasons and filters
-  by gameweek.
+  by gameweek using the standard library `csv` module so the pipeline has no runtime dependency on pandas.
 - **Feature engineering** – constructs lagged and rolling statistics for points, expected goal involvement
   metrics, ICT index and transfer trends while only using information that would have been available prior
   to kickoff. Team and opponent context is derived via club-level rolling aggregates so each appearance is
-  evaluated within recent squad performance trends.
-- **Baseline model** – a lightweight ridge regression implemented in NumPy to avoid additional heavy
-  dependencies while still supporting coefficient inspection.
+  evaluated within recent squad performance trends using pure Python data structures and math utilities.
+- **Baseline model** – a lightweight ridge regression implemented with handcrafted linear algebra to avoid
+  external dependencies while still supporting coefficient inspection.
 - **Pipeline runner** – orchestrates the process end-to-end, stores metrics, learned coefficients and the
-  generated predictions for both the training and hold-out splits in `ml/artifacts/`.
+  generated predictions for both the training and hold-out splits in `ml/artifacts/`, writing CSV outputs
+  directly without relying on pandas.
 - **Rolling-origin validation** – optional time-aware cross-validation per season to monitor generalisation
   before production deployment.
 - **Diagnostics & baselines** – every run now benchmarks against naïve history-based baselines and produces

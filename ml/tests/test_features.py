@@ -1,38 +1,77 @@
-import pandas as pd
+import math
 
 from ml.config import PipelineConfig
 from ml.features import engineer_features
 
 
-def _sample_frame() -> pd.DataFrame:
-    return pd.DataFrame(
+def _sample_records():
+    return [
         {
-            "player_id": [1, 1, 1, 1, 2, 2, 2, 2],
-            "season": ["2024-2025"] * 4 + ["2024-2025"] * 4,
-            "gameweek": [1, 2, 3, 4, 1, 2, 3, 4],
-            "position": ["Midfielder", "Midfielder", "Midfielder", "Midfielder", "Defender", "Defender", "Defender", "Defender"],
-            "team_id": [1, 1, 1, 1, 2, 2, 2, 2],
-            "opponent_team_id": [2, 2, 2, 2, 1, 1, 1, 1],
-            "is_home": [True, False, True, False, True, False, True, False],
-            "team_score": [2, 1, 3, 2, 1, 0, 1, 2],
-            "opponent_score": [1, 1, 1, 2, 2, 1, 3, 2],
-            "result": ["W", "D", "W", "L", "L", "L", "L", "D"],
-            "team_elo": [1500, 1510, 1520, 1530, 1450, 1460, 1470, 1480],
-            "opponent_elo": [1480, 1470, 1490, 1500, 1430, 1440, 1450, 1460],
-            "selected_by_percent": [20.0, 21.0, 22.0, 23.0, 10.0, 10.5, 11.0, 11.5],
-            "now_cost": [7.0, 7.0, 7.1, 7.1, 5.5, 5.6, 5.6, 5.7],
-            "value_form": [0.5, 0.6, 0.7, 0.75, 0.3, 0.35, 0.4, 0.45],
-            "value_season": [1.2, 1.3, 1.35, 1.4, 0.8, 0.85, 0.9, 0.95],
-            "form": [3.0, 3.2, 3.5, 3.7, 2.0, 2.1, 2.2, 2.3],
-            "ep_next": [4.5, 4.6, 4.8, 4.9, 3.0, 3.1, 3.2, 3.3],
-            "transfers_in_event": [1000, 1100, 1200, 1300, 500, 550, 600, 650],
-            "transfers_out_event": [400, 420, 430, 440, 200, 220, 230, 240],
-            "expected_goal_involvements": [0.5, 0.6, 0.7, 0.8, 0.2, 0.25, 0.3, 0.35],
-            "expected_goals_conceded": [1.2, 1.1, 1.0, 0.9, 1.5, 1.4, 1.3, 1.2],
-            "ict_index": [10.0, 11.0, 12.0, 13.0, 7.0, 7.5, 8.0, 8.5],
-            "event_points": [5, 7, 6, 8, 2, 3, 4, 5],
+            "player_id": 1,
+            "season": "2024-2025",
+            "gameweek": gw,
+            "position": "Midfielder",
+            "team_id": 1,
+            "opponent_team_id": 2,
+            "is_home": gw % 2 == 0,
+            "team_score": 2 + (gw % 2),
+            "opponent_score": 1,
+            "result": "W" if gw % 3 else "L",
+            "team_elo": 1500 + gw,
+            "opponent_elo": 1490 - gw,
+            "selected_by_percent": 20.0 + gw,
+            "now_cost": 7.0 + 0.1 * gw,
+            "value_form": 0.5 + 0.05 * gw,
+            "value_season": 1.2 + 0.05 * gw,
+            "form": 3.0 + 0.2 * gw,
+            "ep_next": 4.5 + 0.1 * gw,
+            "transfers_in_event": 1000 + 50 * gw,
+            "transfers_out_event": 400 + 20 * gw,
+            "transfers_in": 5000 + 100 * gw,
+            "transfers_out": 2000 + 50 * gw,
+            "dreamteam_count": 3,
+            "expected_goals": 0.5 + 0.05 * gw,
+            "expected_assists": 0.2 + 0.03 * gw,
+            "expected_goal_involvements": 0.7 + 0.05 * gw,
+            "expected_goals_conceded": 1.2 - 0.05 * gw,
+            "ict_index": 10.0 + 0.5 * gw,
+            "event_points": 5 + gw % 4,
         }
-    )
+        for gw in range(1, 7)
+    ] + [
+        {
+            "player_id": 2,
+            "season": "2024-2025",
+            "gameweek": gw,
+            "position": "Defender",
+            "team_id": 2,
+            "opponent_team_id": 1,
+            "is_home": gw % 2 == 1,
+            "team_score": 1 + (gw % 2),
+            "opponent_score": 2,
+            "result": "L" if gw % 2 else "D",
+            "team_elo": 1480 + gw,
+            "opponent_elo": 1500 - gw,
+            "selected_by_percent": 10.0 + 0.5 * gw,
+            "now_cost": 5.5 + 0.05 * gw,
+            "value_form": 0.3 + 0.04 * gw,
+            "value_season": 0.8 + 0.03 * gw,
+            "form": 2.0 + 0.1 * gw,
+            "ep_next": 3.5 + 0.08 * gw,
+            "transfers_in_event": 600 + 30 * gw,
+            "transfers_out_event": 300 + 15 * gw,
+            "transfers_in": 3500 + 90 * gw,
+            "transfers_out": 1700 + 45 * gw,
+            "dreamteam_count": 1,
+            "expected_goals": 0.2 + 0.04 * gw,
+            "expected_assists": 0.1 + 0.02 * gw,
+            "expected_goal_involvements": 0.3 + 0.03 * gw,
+            "expected_goals_conceded": 1.5 - 0.04 * gw,
+            "ict_index": 7.0 + 0.4 * gw,
+            "event_points": 3 + (gw % 3),
+        }
+        for gw in range(1, 7)
+    ]
 
 
 def test_engineer_features_creates_history_aware_columns():
@@ -43,22 +82,31 @@ def test_engineer_features_creates_history_aware_columns():
         team_form_windows=(2,),
     )
 
-    dataset, feature_columns = engineer_features(_sample_frame(), config)
+    dataset, feature_columns = engineer_features(_sample_records(), config)
 
-    assert not dataset.empty
-    assert "event_points_lag_1" in feature_columns
-    assert "event_points_lag_2" in feature_columns
-    assert "event_points_rolling_2" in feature_columns
-    assert "expected_goal_involvements_lag_1" in feature_columns
-    assert "position_code" in feature_columns
-    assert "result_code" in feature_columns
-    assert "score_diff" in feature_columns
-    assert "team_event_points_mean_lag_1" in feature_columns
-    assert "opponent_event_points_mean_lag_1" in feature_columns
-    assert "team_event_points_mean_rolling_2" in feature_columns
-    assert dataset["event_points_lag_1"].notna().all()
-    assert dataset["expected_goal_involvements_lag_1"].notna().all()
-    assert dataset["team_event_points_mean_lag_1"].notna().all()
-    assert dataset["opponent_event_points_mean_lag_1"].notna().all()
-    assert dataset[feature_columns].isna().sum().sum() == 0
+    assert dataset
+    column_set = set(feature_columns)
+    for expected in [
+        "event_points_lag_1",
+        "event_points_lag_2",
+        "event_points_rolling_2",
+        "expected_goal_involvements_lag_1",
+        "position_code",
+        "result_code",
+        "score_diff",
+        "team_event_points_mean_lag_1",
+        "opponent_event_points_mean_lag_1",
+        "team_event_points_mean_rolling_2",
+    ]:
+        assert expected in column_set
 
+    for row in dataset:
+        for column in feature_columns:
+            value = row[column]
+            assert value is not None
+            if isinstance(value, float):
+                assert not math.isnan(value)
+        assert row["event_points_lag_1"] is not None
+        assert row["expected_goal_involvements_lag_1"] is not None
+        assert row["team_event_points_mean_lag_1"] is not None
+        assert row["opponent_event_points_mean_lag_1"] is not None

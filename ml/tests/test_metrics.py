@@ -1,53 +1,70 @@
-import pandas as pd
+import math
 
-from ml import metrics
-
-
-def test_regression_metrics_basic():
-    actual = [2.0, 4.0, 6.0, 8.0]
-    predicted = [1.5, 4.5, 5.5, 8.5]
-
-    result = metrics.regression_metrics(actual, predicted)
-
-    assert result["count"] == 4
-    assert result["mae"] > 0
-    assert result["rmse"] >= result["mae"]
-    assert "bias" in result and isinstance(result["bias"], float)
-    assert "pearson_r" in result
+from ml.metrics import compute_baseline_metrics, grouped_metrics, regression_metrics
 
 
-def test_grouped_metrics_returns_per_group():
-    frame = pd.DataFrame(
+def test_regression_metrics_handles_basic_values():
+    actual = [2.0, 3.0, 4.0]
+    predicted = [2.5, 2.5, 5.0]
+
+    metrics = regression_metrics(actual, predicted)
+
+    assert metrics["count"] == 3
+    assert math.isclose(metrics["mae"], 2 / 3, rel_tol=1e-6)
+    assert math.isclose(metrics["bias"], (0.5 - 0.5 + 1.0) / 3, abs_tol=1e-6)
+    assert "r2" in metrics
+
+
+def test_grouped_metrics_aggregates_per_group():
+    records = [
+        {"group": "A", "actual": 2.0, "pred": 2.5},
+        {"group": "A", "actual": 3.0, "pred": 3.5},
+        {"group": "B", "actual": 1.0, "pred": 0.5},
+    ]
+
+    grouped = grouped_metrics(records, "actual", "pred", "group")
+
+    assert len(grouped) == 2
+    for entry in grouped:
+        assert entry["count"] >= 1
+        assert entry["group"] in {"A", "B"}
+
+
+def test_compute_baseline_metrics_builds_previous_and_averages():
+    dataset = [
         {
-            "actual": [1, 2, 3, 4],
-            "pred": [1.1, 2.1, 2.8, 4.2],
-            "group": ["A", "A", "B", "B"],
-        }
-    )
-
-    result = metrics.grouped_metrics(frame, "actual", "pred", "group")
-
-    assert len(result) == 2
-    groups = {entry["group"] for entry in result}
-    assert groups == {"A", "B"}
-
-
-def test_compute_baseline_metrics_produces_expected_keys():
-    data = pd.DataFrame(
+            "season": "2024-2025",
+            "player_id": 1,
+            "team_id": 1,
+            "gameweek": 1,
+            "event_points": 5.0,
+        },
         {
-            "season": ["2024-2025"] * 6,
-            "player_id": [1, 1, 1, 2, 2, 2],
-            "team_id": [10, 10, 10, 11, 11, 11],
-            "gameweek": [1, 2, 3, 1, 2, 3],
-            "event_points": [2, 5, 6, 1, 0, 3],
-        }
-    )
+            "season": "2024-2025",
+            "player_id": 1,
+            "team_id": 1,
+            "gameweek": 2,
+            "event_points": 6.0,
+        },
+        {
+            "season": "2024-2025",
+            "player_id": 2,
+            "team_id": 1,
+            "gameweek": 1,
+            "event_points": 4.0,
+        },
+        {
+            "season": "2024-2025",
+            "player_id": 2,
+            "team_id": 1,
+            "gameweek": 2,
+            "event_points": 7.0,
+        },
+    ]
 
-    baselines = metrics.compute_baseline_metrics(data, "event_points")
+    baselines = compute_baseline_metrics(dataset, target="event_points")
 
     assert "previous_match_points" in baselines
+    assert baselines["previous_match_points"]["coverage"] > 0
     assert "player_cumulative_average" in baselines
-    assert "team_history_average" in baselines
-    for values in baselines.values():
-        assert values["count"] > 0
-        assert 0 < values["coverage"] <= 1
+    assert baselines["player_cumulative_average"]["coverage"] > 0

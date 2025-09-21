@@ -1,6 +1,6 @@
+import csv
 import json
 
-import pandas as pd
 import pytest
 
 from ml.config import PipelineConfig
@@ -8,7 +8,7 @@ from ml import pipeline as pipeline_module
 from ml.pipeline import PointsPredictionPipeline
 
 
-def _synthetic_dataset() -> pd.DataFrame:
+def _synthetic_dataset():
     rows = []
     teams = {
         1: {"players": [(101, "Forward"), (102, "Midfielder")]},
@@ -60,7 +60,7 @@ def _synthetic_dataset() -> pd.DataFrame:
                     }
                 )
 
-    return pd.DataFrame(rows)
+    return rows
 
 
 def test_pipeline_runs_and_persists_results(tmp_path, monkeypatch):
@@ -87,12 +87,18 @@ def test_pipeline_runs_and_persists_results(tmp_path, monkeypatch):
     assert result.cross_validation is not None
     assert len(result.cross_validation) > 0
     assert any(entry["fold"] == 1 for entry in result.cross_validation)
-    assert not result.predictions["test"].empty
+    assert result.predictions["test"]
     assert (tmp_path / "points_baseline_metrics.json").exists()
     assert (tmp_path / "points_baseline_coefficients.json").exists()
     assert (tmp_path / "points_baseline_predictions.csv").exists()
-    saved_predictions = pd.read_csv(tmp_path / "points_baseline_predictions.csv")
-    assert set(saved_predictions["split"]) >= {"train", "test"}
+
+    with (tmp_path / "points_baseline_predictions.csv").open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        saved_predictions = list(reader)
+
+    assert any(row.get("split") == "train" for row in saved_predictions)
+    assert any(row.get("split") == "test" for row in saved_predictions)
+
     interval_columns = [
         "predicted_points_lower_p80",
         "predicted_points_upper_p80",
@@ -101,9 +107,10 @@ def test_pipeline_runs_and_persists_results(tmp_path, monkeypatch):
         "predicted_points_expected_error_p95",
     ]
     for column in interval_columns + ["risk_band"]:
-        assert column in result.predictions["test"].columns
-        assert column in saved_predictions.columns
-    risk_values = set(result.predictions["test"]["risk_band"].dropna().unique())
+        assert all(column in row for row in result.predictions["test"])
+        assert any(column in row and row[column] for row in saved_predictions)
+
+    risk_values = {row.get("risk_band") for row in result.predictions["test"] if row.get("risk_band")}
     assert risk_values <= {"low", "medium", "high", "unknown"}
     assert result.diagnostics is not None
     assert "test" in result.diagnostics
@@ -167,4 +174,3 @@ def test_pipeline_performs_alpha_tuning(tmp_path, monkeypatch):
     assert payload["hyperparameters"]["alpha"] == pytest.approx(0.1)
     assert payload["hyperparameters"]["tuning"]["selected_alpha"] == pytest.approx(0.1)
     assert "model_selection" in payload.get("diagnostics", {})
-
