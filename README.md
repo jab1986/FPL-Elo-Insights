@@ -21,6 +21,38 @@ Feel free to use the data from this repository in whatever way works best for yo
 Inspired by the amazing work of [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League), this project aims to continue the spirit of open data in the FPL community. If you build something cool, let me know – I'd be happy to feature a link to your project!
 </details>
 
+## Command Line Interface
+
+You can explore the dataset without running the API or frontend by using the bundled command line interface. It exposes the same core features that power the FastAPI service—player and team lookups, match data, dashboard metrics, and Fantasy Premier League entry summaries.
+
+```bash
+cd backend
+pip install -r requirements.txt
+python -m backend.cli --help
+```
+
+Common examples:
+
+- Show the top ten players by total points:
+  ```bash
+  python -m backend.cli players top --limit 10
+  ```
+- Inspect a specific player:
+  ```bash
+  python -m backend.cli players get 47
+  ```
+- List teams or matches (with optional filters):
+  ```bash
+  python -m backend.cli teams list
+  python -m backend.cli matches list --gameweek 5
+  ```
+- Retrieve an example Fantasy Premier League squad (live when credentials are configured, or using the offline sample):
+  ```bash
+  python -m backend.cli user-team show 266343
+  ```
+
+When Supabase credentials or the public FPL API are unavailable the CLI automatically falls back to rich sample data so you can continue working offline.
+
 ## What's New for the 2025/26 Season?
 
 <details>

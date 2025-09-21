@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Query
 from typing import List, Optional
+
 from app.models import MatchBase
+from app.services import mock_data
 from app.services.data_service import data_service
 
 router = APIRouter()
@@ -15,22 +17,7 @@ async def get_matches(
         return data_service.get_matches(gameweek)
     except Exception:
         # Return mock data for development
-        return [
-            {
-                "id": 1,
-                "gameweek": 25,
-                "home_team": "Manchester City",
-                "away_team": "Liverpool",
-                "home_score": 3,
-                "away_score": 1,
-                "kickoff_time": "2024-02-25T17:30:00Z",
-                "finished": True,
-                "minutes": 90,
-                "provisional_start_time": False,
-                "finished_provisional": True,
-                "started": True,
-            }
-        ]
+        return mock_data.sample_matches(gameweek)
 
 
 @router.get("/matches/{match_id}", response_model=MatchBase)
@@ -43,17 +30,4 @@ async def get_match(match_id: int):
         return match
     except Exception:
         # Return mock data for development
-        return {
-            "id": match_id,
-            "gameweek": 25,
-            "home_team": "Arsenal",
-            "away_team": "Chelsea",
-            "home_score": 2,
-            "away_score": 2,
-            "kickoff_time": "2024-02-24T15:00:00Z",
-            "finished": True,
-            "minutes": 90,
-            "provisional_start_time": False,
-            "finished_provisional": True,
-            "started": True,
-        }
+        return mock_data.sample_match(match_id)

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Query
 from typing import List, Optional
+
 from app.models import TeamBase
+from app.services import mock_data
 from app.services.data_service import data_service
 
 router = APIRouter()
@@ -13,27 +15,7 @@ async def get_teams():
         return data_service.get_teams()
     except Exception:
         # Return mock data for development
-        return [
-            {
-                "id": 1,
-                "name": "Manchester City",
-                "short_name": "MCI",
-                "strength": 5,
-                "played": 25,
-                "win": 18,
-                "draw": 4,
-                "loss": 3,
-                "points": 58,
-                "position": 1,
-                "form": "WWWDW",
-                "strength_overall_home": 1350,
-                "strength_overall_away": 1380,
-                "strength_attack_home": 1350,
-                "strength_attack_away": 1380,
-                "strength_defence_home": 1350,
-                "strength_defence_away": 1380,
-            }
-        ]
+        return mock_data.sample_teams()
 
 
 @router.get("/teams/{team_id}", response_model=TeamBase)
@@ -46,25 +28,7 @@ async def get_team(team_id: int):
         return team
     except Exception:
         # Return mock data for development
-        return {
-            "id": team_id,
-            "name": "Liverpool",
-            "short_name": "LIV",
-            "strength": 5,
-            "played": 25,
-            "win": 16,
-            "draw": 6,
-            "loss": 3,
-            "points": 54,
-            "position": 2,
-            "form": "WDWWW",
-            "strength_overall_home": 1320,
-            "strength_overall_away": 1350,
-            "strength_attack_home": 1320,
-            "strength_attack_away": 1350,
-            "strength_defence_home": 1320,
-            "strength_defence_away": 1350,
-        }
+        return mock_data.sample_team(team_id)
 
 
 @router.get("/teams/search", response_model=List[TeamBase])
@@ -74,4 +38,4 @@ async def search_teams(q: str = Query(..., description="Search query")):
         return data_service.search_teams(q)
     except Exception:
         # Return mock data for development
-        return []
+        return mock_data.sample_search_teams(q)
