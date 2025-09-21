@@ -11,11 +11,12 @@ import httpx
 import typer
 from dotenv import load_dotenv
 
+# Load environment variables first before importing services
+load_dotenv()
+
 from app.services import mock_data
 from app.services.data_service import data_service
 from app.services.fpl_service import fpl_service
-
-load_dotenv()
 
 app = typer.Typer(help="FPL Insights command line interface")
 players_app = typer.Typer(help="Player related commands")
