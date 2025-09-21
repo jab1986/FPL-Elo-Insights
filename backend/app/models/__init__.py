@@ -167,3 +167,85 @@ class MatchFilters(BaseModel):
     gameweek: Optional[int] = None
     team: Optional[str] = None
     finished: Optional[bool] = None
+
+
+# User Team Models
+class UserTeamPlayerInfo(BaseModel):
+    id: Optional[int]
+    web_name: Optional[str]
+    first_name: Optional[str]
+    second_name: Optional[str]
+    team: Optional[str]
+    team_short_name: Optional[str]
+    position: Optional[str]
+    now_cost: Optional[float]
+    total_points: Optional[int]
+    selected_by_percent: Optional[float]
+    event_points: Optional[int] = None
+    status: Optional[str] = None
+
+
+class UserTeamPick(BaseModel):
+    element: Optional[int]
+    position: Optional[int]
+    multiplier: Optional[int]
+    is_captain: bool = False
+    is_vice_captain: bool = False
+    player: UserTeamPlayerInfo
+
+
+class UserTeamHistoryEntry(BaseModel):
+    event: Optional[int]
+    points: Optional[int]
+    total_points: Optional[int]
+    rank: Optional[int]
+    overall_rank: Optional[int]
+    event_transfers: Optional[int]
+    event_transfers_cost: Optional[int]
+    bank: Optional[float]
+    value: Optional[float]
+    points_on_bench: Optional[int]
+
+
+class UserTeamPastSeason(BaseModel):
+    season_name: Optional[str]
+    total_points: Optional[int]
+    rank: Optional[int]
+
+
+class UserTeamHistory(BaseModel):
+    current: List[UserTeamHistoryEntry]
+    past: List[UserTeamPastSeason]
+
+
+class UserTeamSummary(BaseModel):
+    id: Optional[int]
+    name: Optional[str]
+    player_first_name: Optional[str]
+    player_last_name: Optional[str]
+    player_region_name: Optional[str]
+    summary_overall_points: Optional[int]
+    summary_overall_rank: Optional[int]
+    summary_event_points: Optional[int]
+    summary_event_rank: Optional[int]
+    summary_event_transfers: Optional[int]
+    summary_event_transfers_cost: Optional[int]
+    current_event: Optional[int]
+    total_transfers: Optional[int]
+    team_value: Optional[float]
+    bank: Optional[float]
+    favourite_team: Optional[str]
+    favourite_team_name: Optional[str] = None
+    joined_time: Optional[datetime]
+
+
+class UserTeamResponse(BaseModel):
+    team: UserTeamSummary
+    current_event: Optional[int]
+    current_event_summary: Optional[UserTeamHistoryEntry]
+    picks: List[UserTeamPick]
+    bench: List[UserTeamPick]
+    chips: List[dict]
+    history: UserTeamHistory
+    source: str
+    fetched_at: datetime

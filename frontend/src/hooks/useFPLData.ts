@@ -136,3 +136,18 @@ export const useSearchTeams = (query: string) => {
     staleTime: 30 * 1000,
   });
 };
+
+export const useUserTeam = (teamId?: number, event?: number) => {
+  return useQuery({
+    queryKey: ['userTeam', teamId, event],
+    queryFn: () => {
+      if (!teamId) {
+        throw new Error('Team ID is required');
+      }
+      return apiService.getUserTeam(teamId, event);
+    },
+    enabled: typeof teamId === 'number' && teamId > 0,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+};

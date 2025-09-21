@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import players, teams, matches, dashboard
+from app.routes import players, teams, matches, dashboard, user_teams
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -30,6 +30,7 @@ app.include_router(players.router, prefix="/api", tags=["players"])
 app.include_router(teams.router, prefix="/api", tags=["teams"])
 app.include_router(matches.router, prefix="/api", tags=["matches"])
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
+app.include_router(user_teams.router, prefix="/api", tags=["user-teams"])
 
 
 @app.get("/")
