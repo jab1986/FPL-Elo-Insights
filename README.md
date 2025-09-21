@@ -21,6 +21,10 @@ Feel free to use the data from this repository in whatever way works best for yo
 Inspired by the amazing work of [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League), this project aims to continue the spirit of open data in the FPL community. If you build something cool, let me know – I'd be happy to feature a link to your project!
 </details>
 
+## Machine Learning Predictions (Baseline)
+
+The machine learning pipeline in [`ml/`](ml/README.md) assembles historical gameweek data, engineers lagged and rolling features, layers in team and opponent context, and fits a lightweight ridge regression model to estimate upcoming gameweek points. Run `python -m ml.pipeline` to execute the baseline configuration; metrics, learned coefficients, calibrated prediction intervals, risk bands, history-based baselines and the generated predictions for both training and hold-out splits are stored under `ml/artifacts/`. Optional rolling-origin cross-validation can be toggled via `PipelineConfig` to stress-test generalisation as the system evolves towards the full prediction engine outlined in `ML_PREDICTION_PLAN.md`, and automatic ridge tuning (`alpha_grid`) is available for lightweight model selection without introducing external dependencies.
+
 ## Command Line Interface
 
 You can explore the dataset without running the API or frontend by using the bundled command line interface. It exposes the same core features that power the FastAPI service—player and team lookups, match data, dashboard metrics, and Fantasy Premier League entry summaries.
