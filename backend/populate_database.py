@@ -46,9 +46,17 @@ class FPLDataPopulator:
         print("Clearing existing data...")
 
         tables = ['playermatchstats', 'matches', 'players', 'teams', 'gameweek_summaries']
+        tables_without_id_column = {'gameweek_summaries'}
+
         for table in tables:
             try:
-                result = self.supabase.table(table).delete().neq('id', 0).execute()
+                query = self.supabase.table(table).delete()
+
+                if table in tables_without_id_column:
+                    result = query.execute()
+                else:
+                    result = query.neq('id', 0).execute()
+
                 print(f"Cleared {table} table")
             except Exception as e:
                 print(f"Warning: Could not clear {table}: {e}")
