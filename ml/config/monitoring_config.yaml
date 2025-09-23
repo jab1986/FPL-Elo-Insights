@@ -1,0 +1,115 @@
+# FPL ML Monitoring Configuration
+# This file contains all configuration for the automated retraining pipeline
+
+model:
+  name: "fpl_points_predictor"
+  environment: "development"  # development, staging, production
+  artifacts_dir: "ml/artifacts"
+  logs_dir: "ml/logs"
+
+monitoring:
+  interval_minutes: 60
+  data_window_days: 30
+  min_samples_for_analysis: 100
+
+performance_thresholds:
+  mae_warning: 1.5
+  mae_critical: 2.0
+  rmse_warning: 2.5
+  rmse_critical: 3.0
+  r2_warning: 0.3
+  r2_critical: 0.1
+  performance_degradation_rate: 0.1
+
+drift_thresholds:
+  psi_warning: 0.1
+  psi_critical: 0.25
+  ks_statistic_warning: 0.1
+  ks_statistic_critical: 0.2
+  feature_drift_rate: 0.05
+
+retraining:
+  min_retrain_interval_hours: 24
+  max_retrain_attempts: 3
+  performance_improvement_threshold: 0.05
+  enable_emergency_retraining: true
+  emergency_retraining_threshold: 0.2
+  enable_gradual_rollout: true
+  gradual_rollout_percentage: 0.1
+  rollback_enabled: true
+  quality_gate_threshold: 0.95
+
+notifications:
+  enabled_channels: ["email", "slack"]  # email, slack, discord, dashboard
+  email_recipients: ["ml-team@company.com"]
+  slack_webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+  discord_webhook_url: ""  # Optional
+  dashboard_url: ""  # Optional
+  alert_cooldown_minutes: 15
+  critical_alerts_only: false
+  include_model_metrics: true
+  include_charts: false
+
+scheduler:
+  enabled: true
+  schedule_cron: "0 2 * * *"  # Daily at 2 AM
+  enable_performance_based: true
+  performance_check_interval_minutes: 60
+  max_concurrent_jobs: 1
+  job_timeout_hours: 6
+  retry_failed_jobs: true
+  max_job_retries: 2
+
+database:
+  enabled: true
+  connection_string: "postgresql://user:password@localhost:5432/fpl_ml"
+  performance_table: "ml_performance_history"
+  drift_table: "ml_drift_history"
+  model_versions_table: "ml_model_versions"
+  batch_size: 1000
+  connection_pool_size: 5
+
+monitored_features:
+  - "total_points"
+  - "goals_scored"
+  - "assists"
+  - "clean_sheets"
+  - "goals_conceded"
+  - "own_goals"
+  - "penalties_saved"
+  - "penalties_missed"
+  - "yellow_cards"
+  - "red_cards"
+  - "saves"
+  - "bonus"
+  - "bps"
+  - "influence"
+  - "creativity"
+  - "threat"
+  - "ict_index"
+
+exclude_features:
+  - "player_id"
+  - "season"
+  - "gameweek"
+  - "fixture_id"
+  - "team_id"
+  - "opponent_team_id"
+  - "position_code"
+
+validation:
+  enabled: true
+  metrics: ["mae", "rmse", "r2"]
+
+api:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8001
+
+advanced:
+  enable_statistical_process_control: true
+  spc_control_limits: [2.0, 3.0]
+  enable_trend_analysis: true
+  trend_analysis_window: 7
+  enable_prediction_forecasting: true
+  forecasting_horizon: 14

@@ -73,30 +73,32 @@ npm run test
 ### Data Architecture
 - **Live Sources**: FPL API (`https://fantasy.premierleague.com/api/`)
 - **Database**: Supabase (PostgreSQL) with tables: players, teams, matches, playermatchstats, gameweek_summaries
-- **Fallback**: Mock data service when live services unavailable
 - **CSV Exports**: `data/` directory with historical datasets organized by season/gameweek
 
 ## Key Architectural Patterns
 
 ### Data Flow Strategy
+
 1. **Primary**: Live FPL API → Supabase → Backend API → Frontend
-2. **Fallback**: Mock data when services unavailable
-3. **CLI**: Direct database access with same fallback logic
+2. **CLI**: Direct database access using live data only
 
 ### Service Layer Design
-- `data_service.py` - Supabase database operations with graceful fallback to mock data
+
+- `data_service.py` - Supabase database operations; errors surface clearly if data source is unavailable
 - `fpl_service.py` - Official FPL API integration with caching and rate limiting
-- `mock_data.py` - Development/fallback data matching production schemas
 
 ### Error Handling Philosophy
-Services degrade gracefully with clear user feedback when:
-- Database connection fails → falls back to mock data
-- FPL API unavailable → uses cached/sample data
-- Missing environment variables → development mode with warnings
+
+Services return explicit errors with clear user feedback when:
+
+- Database connection fails
+- FPL API is unavailable
+- Environment variables are missing
 
 ## Database Schema
 
 ### Core Tables
+
 - **players** - FPL player data with performance metrics, pricing, and ownership
 - **teams** - Premier League teams with Elo ratings and strength metrics
 - **matches** - Fixtures, results, and detailed match statistics
@@ -104,6 +106,7 @@ Services degrade gracefully with clear user feedback when:
 - **gameweek_summaries** - Gameweek metadata, deadlines, and top performers
 
 ### Key Relationships
+
 - Players belong to teams (many-to-one)
 - Matches involve two teams (home/away)
 - PlayerMatchStats links players to specific match performances
@@ -112,6 +115,7 @@ Services degrade gracefully with clear user feedback when:
 ## Environment Configuration
 
 ### Required Environment Variables (.env)
+
 ```bash
 # Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
@@ -122,28 +126,32 @@ MERGE_SEASON=2025-2026
 ```
 
 ### File Locations
+
 - Backend: `backend/.env`
 - Root: `.env` (copied from root for CLI access)
 
 ## Development Workflow
 
 ### Starting Development
+
 1. **Backend First**: Set up virtual environment, install dependencies, start server
 2. **Database**: Run schema.sql in Supabase, then populate_database.py
 3. **Frontend**: Install npm dependencies, start dev server
 4. **Verification**: Use CLI tool to test data access
 
 ### Working with Data
+
 - **CLI Tool**: Best way to explore and understand data structures
-- **Mock Data**: Develop against `mock_data.py` when services unavailable
 - **Live Data**: Populate database with `populate_database.py` for real data
 - **CSV Exports**: Historical data available in `data/` directory
+- **Health Checks**: Use `/api/health/data` to verify connectivity to Supabase
 
 ### Code Organization Principles
+
 - **API Routes**: One file per resource type (players, teams, matches)
 - **Type Safety**: Pydantic models shared between CLI and API
 - **Separation**: Clear boundaries between data access, business logic, and presentation
-- **Fallbacks**: Every service has offline/mock capability
+- **Observability**: Every service surfaces failures; no offline/mock capability
 
 ## Special Considerations
 

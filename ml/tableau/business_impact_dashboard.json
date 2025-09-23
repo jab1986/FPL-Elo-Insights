@@ -1,0 +1,486 @@
+{
+  "dashboard_name": "Business Impact Dashboard",
+  "description": "Business value analysis, player recommendations, and ROI assessment for FPL predictions",
+  "version": "1.0.0",
+  "tableau_version": "2023.1+",
+  "primary_data_source": "player_recommendations.csv",
+  "related_data_sources": [
+    "value_analysis.csv",
+    "risk_assessment.csv",
+    "seasonal_trends.csv",
+    "prediction_analysis.csv"
+  ],
+  "worksheets": [
+    {
+      "name": "Player Recommendations Overview",
+      "description": "Top recommended players by value score",
+      "chart_type": "kpi_cards",
+      "primary_fields": [
+        {
+          "field": "avg_actual_points",
+          "aggregation": "AVG",
+          "filter": "recommendation_rank <= 10"
+        },
+        {
+          "field": "value_score",
+          "aggregation": "AVG",
+          "filter": "recommendation_rank <= 10"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "sequential_green",
+        "show_sparks": true,
+        "number_format": "decimal_1"
+      }
+    },
+    {
+      "name": "Top Players by Position",
+      "description": "Best performing players by position",
+      "chart_type": "bar_chart",
+      "primary_fields": [
+        {
+          "field": "avg_actual_points",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "position"
+      ],
+      "sort_order": "descending",
+      "limit": 10,
+      "layout": {
+        "x": 400,
+        "y": 0,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "orientation": "horizontal",
+        "color_palette": "categorical_position",
+        "show_labels": true
+      }
+    },
+    {
+      "name": "Value Analysis by Price Point",
+      "description": "Points per million analysis across price ranges",
+      "chart_type": "scatter_plot",
+      "primary_fields": [
+        {
+          "field": "points_per_million",
+          "aggregation": "AVG"
+        },
+        {
+          "field": "avg_points",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "price_category"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 300,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "point_size": "by_sample_count",
+        "color_by": "price_point",
+        "show_trend_line": true
+      }
+    },
+    {
+      "name": "Risk-Reward Matrix",
+      "description": "Risk vs reward analysis for player recommendations",
+      "chart_type": "scatter_plot",
+      "primary_fields": [
+        {
+          "field": "avg_actual_points",
+          "aggregation": "AVG"
+        },
+        {
+          "field": "consistency_score",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "position"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 300,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "point_size": "by_games_analyzed",
+        "color_by": "risk_score",
+        "reference_lines": [
+          {
+            "orientation": "horizontal",
+            "value": 0.7,
+            "label": "High Consistency"
+          },
+          {
+            "orientation": "vertical",
+            "value": 5,
+            "label": "High Points"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Seasonal Performance Trends",
+      "description": "Performance trends over the season",
+      "chart_type": "line_chart",
+      "primary_fields": [
+        {
+          "field": "avg_actual_points",
+          "aggregation": "AVG"
+        },
+        {
+          "field": "avg_predicted_points",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "period"
+      ],
+      "filter": "period_type = 'gameweek'",
+      "layout": {
+        "x": 0,
+        "y": 700,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "dual_axis": true,
+        "show_markers": true,
+        "trend_line": true
+      }
+    },
+    {
+      "name": "ROI Analysis",
+      "description": "Return on investment analysis by price bracket",
+      "chart_type": "bar_chart",
+      "primary_fields": [
+        {
+          "field": "points_per_million",
+          "aggregation": "AVG"
+        },
+        {
+          "field": "avg_points",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "price_category"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 700,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "dual_axis": true,
+        "color_palette": "sequential_green",
+        "show_labels": true
+      }
+    },
+    {
+      "name": "Player Value Distribution",
+      "description": "Distribution of player value scores",
+      "chart_type": "histogram",
+      "primary_fields": [
+        {
+          "field": "value_score",
+          "aggregation": "COUNT"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 1000,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "bins": 20,
+        "show_normal_curve": true
+      }
+    },
+    {
+      "name": "Risk Assessment Heatmap",
+      "description": "Risk assessment by position and prediction confidence",
+      "chart_type": "heatmap",
+      "primary_fields": [
+        {
+          "field": "risk_score",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "risk_category"
+      ],
+      "column_fields": [
+        "position"
+      ],
+      "layout": {
+        "x": 400,
+        "y": 1000,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "sequential_red",
+        "show_labels": true
+      }
+    }
+  ],
+  "dashboard_actions": {
+    "filters": [
+      {
+        "name": "Position",
+        "field": "position",
+        "type": "multiple_value_list",
+        "default": ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+      },
+      {
+        "name": "Price Range",
+        "field": "price_point",
+        "type": "range_slider",
+        "default": {"min": 4.0, "max": 13.0}
+      },
+      {
+        "name": "Recommendation Rank",
+        "field": "recommendation_rank",
+        "type": "range_slider",
+        "default": {"min": 1, "max": 50}
+      },
+      {
+        "name": "Risk Level",
+        "field": "risk_score",
+        "type": "multiple_value_list",
+        "default": ["Low", "Medium", "High"]
+      },
+      {
+        "name": "Value Score Threshold",
+        "field": "value_score",
+        "type": "range_slider",
+        "default": {"min": 0, "max": 20}
+      }
+    ],
+    "parameters": [
+      {
+        "name": "Top N Players",
+        "field": "top_n",
+        "type": "single_value_list",
+        "default": 20,
+        "allowed_values": [10, 20, 50, 100]
+      },
+      {
+        "name": "Minimum Games",
+        "field": "min_games",
+        "type": "single_value_list",
+        "default": 3,
+        "allowed_values": [1, 2, 3, 5, 10]
+      },
+      {
+        "name": "Risk Tolerance",
+        "field": "risk_tolerance",
+        "type": "single_value_list",
+        "default": "Medium",
+        "allowed_values": ["Low", "Medium", "High"]
+      },
+      {
+        "name": "Season Focus",
+        "field": "season_focus",
+        "type": "single_value_list",
+        "default": "Current",
+        "allowed_values": ["Current", "Last Season", "All Time"]
+      }
+    ],
+    "highlighters": [
+      {
+        "name": "High Value Players",
+        "condition": "[value_score] > 15",
+        "style": "green_highlight"
+      },
+      {
+        "name": "Best ROI",
+        "condition": "[points_per_million] > 8",
+        "style": "gold_border"
+      },
+      {
+        "name": "High Risk",
+        "condition": "[risk_score] > 0.7",
+        "style": "red_fill"
+      },
+      {
+        "name": "Consistent Performers",
+        "condition": "[consistency_score] > 0.8",
+        "style": "blue_border"
+      }
+    ]
+  },
+  "calculated_fields": [
+    {
+      "name": "Points per Million",
+      "formula": "AVG([avg_actual_points]) / AVG([price_point])",
+      "description": "Points normalized by player cost"
+    },
+    {
+      "name": "Value Score",
+      "formula": "[avg_actual_points] * [consistency_score]",
+      "description": "Combined performance and consistency score"
+    },
+    {
+      "name": "ROI Category",
+      "formula": "IF [points_per_million] >= 8 THEN 'Excellent ROI' ELSEIF [points_per_million] >= 6 THEN 'Good ROI' ELSEIF [points_per_million] >= 4 THEN 'Average ROI' ELSE 'Poor ROI' END",
+      "description": "ROI classification"
+    },
+    {
+      "name": "Risk-Adjusted Return",
+      "formula": "[value_score] * (1 - [risk_score])",
+      "description": "Return adjusted for risk"
+    },
+    {
+      "name": "Player Tier",
+      "formula": "IF [recommendation_rank] <= 10 THEN 'Tier 1' ELSEIF [recommendation_rank] <= 30 THEN 'Tier 2' ELSEIF [recommendation_rank] <= 60 THEN 'Tier 3' ELSE 'Tier 4' END",
+      "description": "Player performance tier"
+    },
+    {
+      "name": "Investment Potential",
+      "formula": "IF [value_score] > 15 AND [risk_score] < 0.5 THEN 'High Potential' ELSEIF [value_score] > 10 OR [risk_score] < 0.7 THEN 'Medium Potential' ELSE 'Low Potential' END",
+      "description": "Investment attractiveness rating"
+    },
+    {
+      "name": "Seasonal Trend",
+      "formula": "WINDOW_AVG(AVG([avg_actual_points]), -3, 0)",
+      "description": "Recent performance trend"
+    }
+  ],
+  "layout_containers": [
+    {
+      "name": "Player Recommendations Tab",
+      "type": "tab",
+      "worksheets": ["Player Recommendations Overview", "Top Players by Position"],
+      "active": true
+    },
+    {
+      "name": "Value Analysis Tab",
+      "type": "tab",
+      "worksheets": ["Value Analysis by Price Point", "ROI Analysis"],
+      "active": false
+    },
+    {
+      "name": "Risk Assessment Tab",
+      "type": "tab",
+      "worksheets": ["Risk-Reward Matrix", "Risk Assessment Heatmap"],
+      "active": false
+    },
+    {
+      "name": "Seasonal Trends Tab",
+      "type": "tab",
+      "worksheets": ["Seasonal Performance Trends", "Player Value Distribution"],
+      "active": false
+    }
+  ],
+  "story_points": [
+    {
+      "name": "Business Impact Executive Summary",
+      "description": "Key business metrics and recommendations",
+      "captions": [
+        "Top value score: {MAX([value_score])}",
+        "Best ROI category: {MODE([roi_category])}",
+        "Risk-adjusted opportunities: {COUNT([high_potential])}"
+      ]
+    },
+    {
+      "name": "Investment Strategy Insights",
+      "description": "Strategic investment recommendations",
+      "captions": [
+        "Optimal price points: {TOP([price_category], [points_per_million])}",
+        "Low-risk high-reward: {LOW([risk_score], [value_score])}",
+        "Seasonal opportunities: {TREND([seasonal_trend])}"
+      ]
+    }
+  ],
+  "data_source_connections": [
+    {
+      "name": "Player Recommendations",
+      "file": "player_recommendations.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Value Analysis",
+      "file": "value_analysis.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Risk Assessment",
+      "file": "risk_assessment.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "High Value Opportunity",
+      "condition": "[value_score] > 18",
+      "threshold": "info",
+      "notification": "High value player detected"
+    },
+    {
+      "name": "Risk Threshold Exceeded",
+      "condition": "[risk_score] > 0.8",
+      "threshold": "warning",
+      "notification": "High risk player in recommendations"
+    },
+    {
+      "name": "Market Inefficiency",
+      "condition": "[points_per_million] > 10",
+      "threshold": "info",
+      "notification": "Potential market inefficiency detected"
+    },
+    {
+      "name": "Seasonal Opportunity",
+      "condition": "[seasonal_trend] > 1.2 * [avg_trend]",
+      "threshold": "info",
+      "notification": "Seasonal performance opportunity identified"
+    }
+  ],
+  "export_settings": {
+    "image_formats": ["png", "pdf"],
+    "data_formats": ["csv", "excel"],
+    "scheduled_exports": [
+      {
+        "name": "Weekly Player Recommendations",
+        "format": "pdf",
+        "schedule": "weekly_monday_8am",
+        "recipients": ["fantasy-managers@company.com", "scouts@company.com"]
+      },
+      {
+        "name": "Monthly Business Impact Report",
+        "format": "excel",
+        "schedule": "monthly_1st_9am",
+        "recipients": ["management@company.com", "business-analysts@company.com"]
+      }
+    ]
+  },
+  "metadata": {
+    "created_by": "Business Analytics Team",
+    "created_date": "2024-01-01",
+    "last_modified": "2024-01-01",
+    "tags": ["business-impact", "roi", "recommendations", "value-analysis", "fpl"],
+    "description": "Production-ready Tableau dashboard for business impact analysis and player recommendations"
+  }
+}

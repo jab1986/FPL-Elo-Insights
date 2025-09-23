@@ -19,7 +19,7 @@ def load_merged_gameweek_data(config: PipelineConfig) -> pd.DataFrame:
         if not csv_path.exists():
             raise FileNotFoundError(f"Missing merged_gw.csv for season '{season}' at {csv_path}")
 
-        frame = pd.read_csv(csv_path)
+        frame = pd.read_csv(csv_path, low_memory=False)
         frame["season"] = season
 
         if "gameweek" not in frame.columns:

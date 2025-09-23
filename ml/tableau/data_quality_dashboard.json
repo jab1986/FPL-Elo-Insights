@@ -1,0 +1,446 @@
+{
+  "dashboard_name": "Data Quality Dashboard",
+  "description": "Comprehensive data quality monitoring, drift detection, and outlier analysis",
+  "version": "1.0.0",
+  "tableau_version": "2023.1+",
+  "primary_data_source": "data_coverage.csv",
+  "related_data_sources": [
+    "feature_statistics.csv",
+    "outlier_analysis.csv",
+    "data_drift.csv",
+    "model_diagnostics.csv"
+  ],
+  "worksheets": [
+    {
+      "name": "Data Completeness Overview",
+      "description": "Missing data patterns and completeness metrics",
+      "chart_type": "kpi_cards",
+      "primary_fields": [
+        {
+          "field": "value",
+          "aggregation": "AVG",
+          "filter": "metric LIKE '%missing%'"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "sequential_red",
+        "show_sparks": true,
+        "number_format": "percentage_1"
+      }
+    },
+    {
+      "name": "Missing Data Heatmap",
+      "description": "Missing data patterns across features and time",
+      "chart_type": "heatmap",
+      "primary_fields": [
+        {
+          "field": "missing_percentage",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "feature"
+      ],
+      "column_fields": [
+        "split"
+      ],
+      "layout": {
+        "x": 400,
+        "y": 0,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "sequential_red",
+        "show_labels": true
+      }
+    },
+    {
+      "name": "Feature Distribution Analysis",
+      "description": "Statistical properties of features",
+      "chart_type": "box_plot",
+      "primary_fields": [
+        {
+          "field": "mean",
+          "aggregation": "NONE"
+        }
+      ],
+      "group_fields": [
+        "feature"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 300,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "show_outliers": true,
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "name": "Outlier Detection Summary",
+      "description": "Outlier analysis across key metrics",
+      "chart_type": "bar_chart",
+      "primary_fields": [
+        {
+          "field": "outlier_count",
+          "aggregation": "SUM"
+        },
+        {
+          "field": "outlier_percentage",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "metric"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 300,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "dual_axis": true,
+        "color_palette": "diverging_orange_blue"
+      }
+    },
+    {
+      "name": "Data Drift Indicators",
+      "description": "Data drift detection and monitoring",
+      "chart_type": "line_chart",
+      "primary_fields": [
+        {
+          "field": "mean_drift",
+          "aggregation": "AVG"
+        },
+        {
+          "field": "std_drift",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "feature"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 700,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "dual_axis": true,
+        "trend_line": true,
+        "reference_line": {
+          "value": 0.5,
+          "label": "Drift Threshold"
+        }
+      }
+    },
+    {
+      "name": "Feature Correlation Matrix",
+      "description": "Feature correlations and relationships",
+      "chart_type": "heatmap",
+      "primary_fields": [
+        {
+          "field": "correlation",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "feature_1"
+      ],
+      "column_fields": [
+        "feature_2"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 700,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "diverging_red_blue",
+        "show_labels": true
+      }
+    },
+    {
+      "name": "Data Quality Scorecard",
+      "description": "Overall data quality assessment",
+      "chart_type": "radar_chart",
+      "primary_fields": [
+        {
+          "field": "quality_score",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "quality_dimension"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 1000,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "filled": true,
+        "show_labels": true
+      }
+    },
+    {
+      "name": "Anomaly Detection Timeline",
+      "description": "Timeline of data quality anomalies",
+      "chart_type": "gantt_chart",
+      "primary_fields": [
+        {
+          "field": "anomaly_score",
+          "aggregation": "MAX"
+        }
+      ],
+      "date_fields": [
+        "detection_date"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 1000,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_by": "anomaly_type",
+        "show_progress": false
+      }
+    }
+  ],
+  "dashboard_actions": {
+    "filters": [
+      {
+        "name": "Feature Type",
+        "field": "feature_type",
+        "type": "multiple_value_list",
+        "default": ["numeric", "categorical", "temporal"]
+      },
+      {
+        "name": "Split",
+        "field": "split",
+        "type": "single_value_list",
+        "default": "test",
+        "allowed_values": ["train", "test", "validation"]
+      },
+      {
+        "name": "Missing Threshold",
+        "field": "missing_percentage",
+        "type": "range_slider",
+        "default": {"min": 0, "max": 50}
+      },
+      {
+        "name": "Quality Threshold",
+        "field": "quality_score",
+        "type": "range_slider",
+        "default": {"min": 0, "max": 100}
+      }
+    ],
+    "parameters": [
+      {
+        "name": "Outlier Threshold",
+        "field": "outlier_std_threshold",
+        "type": "single_value_list",
+        "default": 3.0,
+        "allowed_values": [2.0, 2.5, 3.0, 3.5, 4.0]
+      },
+      {
+        "name": "Drift Threshold",
+        "field": "drift_threshold",
+        "type": "single_value_list",
+        "default": 0.5,
+        "allowed_values": [0.3, 0.5, 0.7, 1.0]
+      },
+      {
+        "name": "Quality Dimensions",
+        "field": "quality_dimensions",
+        "type": "multiple_value_list",
+        "default": ["completeness", "accuracy", "consistency", "timeliness"]
+      }
+    ],
+    "highlighters": [
+      {
+        "name": "High Missing Data",
+        "condition": "[missing_percentage] > 20",
+        "style": "red_fill"
+      },
+      {
+        "name": "Significant Drift",
+        "condition": "[mean_drift] > 0.5",
+        "style": "orange_border"
+      },
+      {
+        "name": "Outlier Cluster",
+        "condition": "[outlier_percentage] > 10",
+        "style": "red_highlight"
+      },
+      {
+        "name": "Good Quality",
+        "condition": "[quality_score] > 80",
+        "style": "green_fill"
+      }
+    ]
+  },
+  "calculated_fields": [
+    {
+      "name": "Data Quality Score",
+      "formula": "(100 - [missing_percentage]) * (1 - [outlier_percentage]/100)",
+      "description": "Combined data quality metric"
+    },
+    {
+      "name": "Missing Data Impact",
+      "formula": "IF [missing_percentage] > 20 THEN 'High Impact' ELSEIF [missing_percentage] > 10 THEN 'Medium Impact' ELSE 'Low Impact' END",
+      "description": "Impact level of missing data"
+    },
+    {
+      "name": "Drift Severity",
+      "formula": "IF [mean_drift] > 1.0 THEN 'Critical' ELSEIF [mean_drift] > 0.5 THEN 'Warning' ELSE 'Normal' END",
+      "description": "Severity level of detected drift"
+    },
+    {
+      "name": "Outlier Ratio",
+      "formula": "[outlier_count] / [total_count]",
+      "description": "Ratio of outliers to total observations"
+    },
+    {
+      "name": "Feature Importance",
+      "formula": "IF [missing_percentage] > 30 THEN 'Critical' ELSEIF [outlier_percentage] > 15 THEN 'High' ELSEIF [mean_drift] > 0.5 THEN 'Medium' ELSE 'Low' END",
+      "description": "Feature importance based on quality metrics"
+    },
+    {
+      "name": "Data Health Status",
+      "formula": "IF [quality_score] > 90 THEN 'Excellent' ELSEIF [quality_score] > 75 THEN 'Good' ELSEIF [quality_score] > 60 THEN 'Fair' ELSE 'Poor' END",
+      "description": "Overall data health classification"
+    }
+  ],
+  "layout_containers": [
+    {
+      "name": "Data Coverage Tab",
+      "type": "tab",
+      "worksheets": ["Data Completeness Overview", "Missing Data Heatmap"],
+      "active": true
+    },
+    {
+      "name": "Feature Statistics Tab",
+      "type": "tab",
+      "worksheets": ["Feature Distribution Analysis", "Feature Correlation Matrix"],
+      "active": false
+    },
+    {
+      "name": "Outlier Detection Tab",
+      "type": "tab",
+      "worksheets": ["Outlier Detection Summary", "Feature Distribution Analysis"],
+      "active": false
+    },
+    {
+      "name": "Data Drift Tab",
+      "type": "tab",
+      "worksheets": ["Data Drift Indicators", "Anomaly Detection Timeline"],
+      "active": false
+    }
+  ],
+  "story_points": [
+    {
+      "name": "Data Quality Executive Summary",
+      "description": "High-level data quality assessment",
+      "captions": [
+        "Overall quality score: {AVG([quality_score])}",
+        "Critical missing data: {SUM([high_impact_missing])}",
+        "Significant drift detected: {COUNT([significant_drift])}"
+      ]
+    },
+    {
+      "name": "Detailed Quality Analysis",
+      "description": "Comprehensive data quality breakdown",
+      "captions": [
+        "Feature quality distribution: {DISTRIBUTION([feature_quality])}",
+        "Outlier analysis: {TOP([metric], [outlier_percentage])}",
+        "Drift trends: {TREND([mean_drift])}"
+      ]
+    }
+  ],
+  "data_source_connections": [
+    {
+      "name": "Data Quality Metrics",
+      "file": "data_coverage.csv",
+      "refresh_schedule": "daily_6am",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Feature Statistics",
+      "file": "feature_statistics.csv",
+      "refresh_schedule": "daily_6am",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Outlier Analysis",
+      "file": "outlier_analysis.csv",
+      "refresh_schedule": "daily_6am",
+      "connection_type": "csv"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "Critical Missing Data",
+      "condition": "[missing_percentage] > 30",
+      "threshold": "critical",
+      "notification": "Critical missing data detected"
+    },
+    {
+      "name": "Significant Data Drift",
+      "condition": "[mean_drift] > 1.0",
+      "threshold": "critical",
+      "notification": "Significant data drift detected"
+    },
+    {
+      "name": "High Outlier Rate",
+      "condition": "[outlier_percentage] > 20",
+      "threshold": "warning",
+      "notification": "High outlier rate detected"
+    },
+    {
+      "name": "Data Quality Degradation",
+      "condition": "[quality_score] < 60",
+      "threshold": "warning",
+      "notification": "Overall data quality has degraded"
+    }
+  ],
+  "export_settings": {
+    "image_formats": ["png", "pdf"],
+    "data_formats": ["csv", "excel"],
+    "scheduled_exports": [
+      {
+        "name": "Daily Data Quality Report",
+        "format": "pdf",
+        "schedule": "daily_7am",
+        "recipients": ["data-team@company.com", "ml-team@company.com"]
+      },
+      {
+        "name": "Weekly Quality Summary",
+        "format": "excel",
+        "schedule": "weekly_friday_5pm",
+        "recipients": ["management@company.com"]
+      }
+    ]
+  },
+  "metadata": {
+    "created_by": "Data Engineering Team",
+    "created_date": "2024-01-01",
+    "last_modified": "2024-01-01",
+    "tags": ["data-quality", "monitoring", "drift-detection", "outliers", "fpl"],
+    "description": "Production-ready Tableau dashboard for data quality monitoring and assessment"
+  }
+}

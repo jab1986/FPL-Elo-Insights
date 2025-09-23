@@ -1,0 +1,420 @@
+{
+  "dashboard_name": "Prediction Analysis Dashboard",
+  "description": "Comprehensive analysis of model predictions, calibration, and error patterns",
+  "version": "1.0.0",
+  "tableau_version": "2023.1+",
+  "primary_data_source": "prediction_analysis.csv",
+  "related_data_sources": [
+    "calibration_data.csv",
+    "error_distribution.csv",
+    "model_performance_metrics.csv"
+  ],
+  "worksheets": [
+    {
+      "name": "Prediction vs Actual Scatter",
+      "description": "Scatter plot of predicted vs actual points",
+      "chart_type": "scatter_plot",
+      "primary_fields": [
+        {
+          "field": "actual_points",
+          "aggregation": "NONE"
+        },
+        {
+          "field": "predicted_points",
+          "aggregation": "NONE"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "show_trend_line": true,
+        "show_r_squared": true,
+        "point_size": "auto",
+        "transparency": 0.7
+      }
+    },
+    {
+      "name": "Error Distribution by Position",
+      "description": "Absolute error distribution across player positions",
+      "chart_type": "box_plot",
+      "primary_fields": [
+        {
+          "field": "absolute_error",
+          "aggregation": "NONE"
+        }
+      ],
+      "group_fields": [
+        "position"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 0,
+        "width": 500,
+        "height": 400
+      },
+      "visual_settings": {
+        "show_outliers": true,
+        "orientation": "vertical"
+      }
+    },
+    {
+      "name": "Calibration Curve",
+      "description": "Model calibration assessment",
+      "chart_type": "line_chart",
+      "primary_fields": [
+        {
+          "field": "bin_mean_predicted",
+          "aggregation": "NONE"
+        },
+        {
+          "field": "bin_mean_actual",
+          "aggregation": "NONE"
+        }
+      ],
+      "group_fields": [
+        "calibration_bin"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 400,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "line_style": "solid",
+        "markers": true,
+        "reference_line": {
+          "value": 0,
+          "label": "Perfect Calibration"
+        }
+      }
+    },
+    {
+      "name": "Error Heatmap by Gameweek",
+      "description": "Prediction errors across gameweeks",
+      "chart_type": "heatmap",
+      "primary_fields": [
+        {
+          "field": "mean_error",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "position"
+      ],
+      "column_fields": [
+        "gameweek"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 400,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "diverging_red_blue",
+        "reverse_scale": true
+      }
+    },
+    {
+      "name": "Prediction Accuracy Histogram",
+      "description": "Distribution of prediction accuracy scores",
+      "chart_type": "histogram",
+      "primary_fields": [
+        {
+          "field": "prediction_accuracy",
+          "aggregation": "COUNT"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 700,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "bins": 20,
+        "show_normal_curve": true
+      }
+    },
+    {
+      "name": "Confidence Interval Coverage",
+      "description": "Prediction confidence intervals vs actual outcomes",
+      "chart_type": "area_chart",
+      "primary_fields": [
+        {
+          "field": "prediction_count",
+          "aggregation": "SUM"
+        }
+      ],
+      "group_fields": [
+        "confidence_level"
+      ],
+      "layout": {
+        "x": 400,
+        "y": 700,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "stacked": true,
+        "show_percentages": true
+      }
+    },
+    {
+      "name": "Error Pattern Analysis",
+      "description": "Systematic error patterns identification",
+      "chart_type": "scatter_plot",
+      "primary_fields": [
+        {
+          "field": "predicted_points",
+          "aggregation": "NONE"
+        },
+        {
+          "field": "error_percentage",
+          "aggregation": "NONE"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 1000,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "point_color": "by_error_category",
+        "size": "by_sample_count"
+      }
+    },
+    {
+      "name": "Prediction Reliability Matrix",
+      "description": "Prediction reliability by confidence and error",
+      "chart_type": "text_table",
+      "primary_fields": [
+        {
+          "field": "avg_error",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "reliability_category"
+      ],
+      "column_fields": [
+        "error_category"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 1000,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "text_alignment": "center",
+        "number_format": "decimal_2"
+      }
+    }
+  ],
+  "dashboard_actions": {
+    "filters": [
+      {
+        "name": "Position Filter",
+        "field": "position",
+        "type": "multiple_value_list",
+        "default": ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+      },
+      {
+        "name": "Gameweek Range",
+        "field": "gameweek",
+        "type": "range_slider",
+        "default": {"min": 1, "max": 38}
+      },
+      {
+        "name": "Split",
+        "field": "split",
+        "type": "single_value_list",
+        "default": "test",
+        "allowed_values": ["train", "test", "validation"]
+      },
+      {
+        "name": "Error Threshold",
+        "field": "absolute_error",
+        "type": "range_slider",
+        "default": {"min": 0, "max": 20}
+      }
+    ],
+    "parameters": [
+      {
+        "name": "Calibration Bins",
+        "field": "n_bins",
+        "type": "single_value_list",
+        "default": 10,
+        "allowed_values": [5, 10, 15, 20]
+      },
+      {
+        "name": "Confidence Level",
+        "field": "confidence_level",
+        "type": "single_value_list",
+        "default": "95%",
+        "allowed_values": ["80%", "90%", "95%", "99%"]
+      },
+      {
+        "name": "Error Category",
+        "field": "error_category",
+        "type": "multiple_value_list",
+        "default": ["Low Error", "Medium Error", "High Error"]
+      }
+    ],
+    "highlighters": [
+      {
+        "name": "High Error Predictions",
+        "condition": "[absolute_error] > 5",
+        "style": "red_highlight"
+      },
+      {
+        "name": "Well Calibrated",
+        "condition": "ABS([bin_mean_predicted] - [bin_mean_actual]) < 1",
+        "style": "green_highlight"
+      },
+      {
+        "name": "Overconfident",
+        "condition": "[bin_calibration_error] > 2",
+        "style": "orange_highlight"
+      }
+    ]
+  },
+  "calculated_fields": [
+    {
+      "name": "Prediction Accuracy",
+      "formula": "1 - ABS([actual_points] - [predicted_points]) / MAX([actual_points], 1)",
+      "description": "Individual prediction accuracy score"
+    },
+    {
+      "name": "Error Category",
+      "formula": "IF [absolute_error] <= 2 THEN 'Low Error' ELSEIF [absolute_error] <= 5 THEN 'Medium Error' ELSE 'High Error' END",
+      "description": "Categorize prediction errors"
+    },
+    {
+      "name": "Calibration Error",
+      "formula": "ABS([bin_mean_predicted] - [bin_mean_actual])",
+      "description": "Absolute calibration error"
+    },
+    {
+      "name": "Relative Error",
+      "formula": "[absolute_error] / [actual_points]",
+      "description": "Error relative to actual points"
+    },
+    {
+      "name": "Prediction Confidence",
+      "formula": "1 - [error_consistency]",
+      "description": "Model confidence in predictions"
+    },
+    {
+      "name": "Error Skewness",
+      "formula": "SKEW([absolute_error])",
+      "description": "Skewness of error distribution"
+    }
+  ],
+  "layout_containers": [
+    {
+      "name": "Prediction Accuracy Tab",
+      "type": "tab",
+      "worksheets": ["Prediction vs Actual Scatter", "Error Distribution by Position"],
+      "active": true
+    },
+    {
+      "name": "Calibration Curves Tab",
+      "type": "tab",
+      "worksheets": ["Calibration Curve", "Error Heatmap by Gameweek"],
+      "active": false
+    },
+    {
+      "name": "Confidence Intervals Tab",
+      "type": "tab",
+      "worksheets": ["Confidence Interval Coverage", "Prediction Reliability Matrix"],
+      "active": false
+    },
+    {
+      "name": "Error Distribution Tab",
+      "type": "tab",
+      "worksheets": ["Prediction Accuracy Histogram", "Error Pattern Analysis"],
+      "active": false
+    }
+  ],
+  "story_points": [
+    {
+      "name": "Prediction Quality Overview",
+      "description": "Overall assessment of prediction quality",
+      "captions": [
+        "Mean Absolute Error: {AVG([absolute_error])}",
+        "Calibration Error: {AVG([calibration_error])}",
+        "Prediction Accuracy: {AVG([prediction_accuracy])}"
+      ]
+    },
+    {
+      "name": "Error Analysis",
+      "description": "Deep dive into prediction error patterns",
+      "captions": [
+        "Error distribution: {DISTRIBUTION([absolute_error])}",
+        "Position bias: {POSITION([position], [absolute_error])}",
+        "Calibration drift: {TREND([calibration_error])}"
+      ]
+    }
+  ],
+  "data_source_connections": [
+    {
+      "name": "Prediction Analysis Data",
+      "file": "prediction_analysis.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Calibration Data",
+      "file": "calibration_data.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "Calibration Drift",
+      "condition": "[calibration_error] > 2",
+      "threshold": "warning",
+      "notification": "Model calibration has drifted significantly"
+    },
+    {
+      "name": "High Error Rate",
+      "condition": "AVG([absolute_error]) > 5",
+      "threshold": "critical",
+      "notification": "High prediction errors detected"
+    },
+    {
+      "name": "Position Bias",
+      "condition": "MAX([position_error]) > 2 * AVG([position_error])",
+      "threshold": "warning",
+      "notification": "Significant prediction bias detected for some positions"
+    }
+  ],
+  "export_settings": {
+    "image_formats": ["png", "pdf"],
+    "data_formats": ["csv", "excel"],
+    "scheduled_exports": [
+      {
+        "name": "Daily Prediction Analysis",
+        "format": "pdf",
+        "schedule": "daily_9am",
+        "recipients": ["ml-team@company.com", "stakeholders@company.com"]
+      }
+    ]
+  },
+  "metadata": {
+    "created_by": "ML Engineering Team",
+    "created_date": "2024-01-01",
+    "last_modified": "2024-01-01",
+    "tags": ["ml", "predictions", "calibration", "error-analysis", "fpl"],
+    "description": "Production-ready Tableau dashboard for prediction analysis and calibration monitoring"
+  }
+}

@@ -1,0 +1,9 @@
+FPL-Elo-Insights – Project Context (pin me)
+- OS/Shell: Windows PowerShell (v5.1). Use provided scripts; avoid cwd issues.
+- Backend: FastAPI on http://localhost:8001. Start with .\backend\start_backend.ps1
+- Frontend: Vite on http://127.0.0.1:5173 (Windows DNS fix applied). Start in frontend/ with npm run dev.
+- Env: .env at repo root provides SUPABASE_URL and SUPABASE_KEY (live-only; no mocks). DataService loads it explicitly.
+- Health: GET http://localhost:8001/api/health/data to verify Supabase configured and reachable.
+- Live-only rule: No mock fallbacks in API/CLI; failures surface as clear errors.
+- Windows tips: If Vite isn’t reachable, ensure dns.setDefaultResultOrder('verbatim') in vite.config.ts; bind host: '0.0.0.0'.
+- Troubleshooting: See docs/troubleshooting.md; prefer CLI checks: python backend/cli.py players top -l 5.

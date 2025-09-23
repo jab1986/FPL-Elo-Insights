@@ -130,15 +130,17 @@ const MyTeam = () => {
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   }, [data?.bench, data?.picks]);
 
+  const historyEntries = data?.history?.current;
+
   const recentHistory = useMemo(() => {
-    if (!data?.history?.current) {
+    if (!historyEntries) {
       return [] as UserTeamHistoryEntry[];
     }
-    return [...data.history.current]
+    return [...historyEntries]
       .filter((entry) => entry.event != null)
       .sort((a, b) => (b.event ?? 0) - (a.event ?? 0))
       .slice(0, 6);
-  }, [data?.history?.current]);
+  }, [historyEntries]);
 
   const managerName = useMemo(() => {
     const first = data?.team?.player_first_name ?? '';

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,9 @@ from .config import PipelineConfig
 from .data import load_merged_gameweek_data
 from .features import engineer_features
 from .model import RidgeRegressionModel
+from .models import PositionSpecificModel, DeepEnsembleModel
 from . import metrics as metrics_module
+from .evaluation import EvaluationResult, AdvancedEvaluator
 
 
 @dataclass
@@ -26,10 +28,13 @@ class PipelineResult:
     train_rows: int
     test_rows: int
     metrics: Dict[str, Dict[str, float]]
-    model: RidgeRegressionModel
+    model: Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel]
     predictions: Dict[str, pd.DataFrame]
     cross_validation: Optional[List[Dict[str, Any]]] = None
     diagnostics: Optional[Dict[str, Any]] = None
+    model_comparison: Optional[Dict[str, Dict[str, float]]] = None
+    selected_model_type: Optional[str] = None
+    evaluation: Optional[EvaluationResult] = None
 
     def save(self, output_dir: Path) -> None:
         """Persist metrics and model coefficients to disk."""
@@ -57,10 +62,16 @@ class PipelineResult:
             metrics_payload["cross_validation"] = self.cross_validation
         if self.diagnostics:
             metrics_payload["diagnostics"] = self.diagnostics
+        if self.model_comparison:
+            metrics_payload["model_comparison"] = self.model_comparison
+        if self.selected_model_type:
+            metrics_payload["selected_model_type"] = self.selected_model_type
         metrics_path.write_text(json.dumps(metrics_payload, indent=2))
 
-        coefficients_payload = self.model.to_dict(self.features)
-        coefficients_path.write_text(json.dumps(coefficients_payload, indent=2))
+        # Handle different model types for coefficients
+        if hasattr(self.model, 'to_dict'):
+            coefficients_payload = self.model.to_dict(self.features)
+            coefficients_path.write_text(json.dumps(coefficients_payload, indent=2))
 
         prediction_frames = []
         for split_name, frame in self.predictions.items():
@@ -97,6 +108,10 @@ class PointsPredictionPipeline:
         predictions: Dict[str, pd.DataFrame] = {}
         metrics: Dict[str, Dict[str, float]] = {}
         diagnostics: Dict[str, Any] = {}
+        model_comparison = None
+
+        if self.config.model_comparison or self.config.model_type == "auto":
+            model, model_comparison = self._select_best_model(train_df, test_df, feature_columns, dataset)
 
         for split_name, split_df in (("train", train_df), ("test", test_df)):
             prediction_frame, split_metrics, split_diagnostics = self._score_split(
@@ -124,6 +139,8 @@ class PointsPredictionPipeline:
             predictions=predictions,
             cross_validation=cross_validation,
             diagnostics=diagnostics or None,
+            model_comparison=model_comparison if self.config.model_comparison else None,
+            selected_model_type=getattr(model, 'model_type', 'ridge') if hasattr(model, 'model_type') else None,
         )
         result.save(self.config.resolved_output_dir())
         return result
@@ -154,7 +171,7 @@ class PointsPredictionPipeline:
 
     def _compute_metrics(
         self,
-        model: RidgeRegressionModel,
+        model: Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel],
         dataset: pd.DataFrame,
         feature_columns: List[str],
     ) -> Dict[str, float]:
@@ -168,7 +185,7 @@ class PointsPredictionPipeline:
 
     def _build_prediction_frame(
         self,
-        model: RidgeRegressionModel,
+        model: Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel],
         dataset: pd.DataFrame,
         feature_columns: List[str],
         extra_columns: Sequence[str] | None = None,
@@ -193,7 +210,7 @@ class PointsPredictionPipeline:
 
     def _score_split(
         self,
-        model: RidgeRegressionModel,
+        model: Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel],
         dataset: pd.DataFrame,
         feature_columns: List[str],
         history: pd.DataFrame,
@@ -303,6 +320,139 @@ class PointsPredictionPipeline:
                 results.append(metrics)
 
         return results or None
+
+    def _select_best_model(
+        self,
+        train_df: pd.DataFrame,
+        test_df: pd.DataFrame,
+        feature_columns: List[str],
+        full_dataset: pd.DataFrame,
+    ) -> tuple[Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel], Dict[str, Dict[str, float]]]:
+        """Compare different model architectures and select the best performing one."""
+        model_candidates = {}
+        model_metrics = {}
+
+        # Always include Ridge as baseline
+        try:
+            ridge_model = self._train_model_by_type(train_df, feature_columns, "ridge")
+            test_metrics = self._compute_metrics(ridge_model, test_df, feature_columns)
+            model_candidates["ridge"] = ridge_model
+            model_metrics["ridge"] = test_metrics
+        except Exception as e:
+            print(f"Warning: Ridge model failed: {e}")
+
+        # Try PositionSpecific model if dependencies are available
+        try:
+            pos_model = self._train_model_by_type(train_df, feature_columns, "position_specific")
+            test_metrics = self._compute_metrics(pos_model, test_df, feature_columns)
+            model_candidates["position_specific"] = pos_model
+            model_metrics["position_specific"] = test_metrics
+        except ImportError as e:
+            print(f"Warning: PositionSpecific model not available (missing dependencies): {e}")
+        except Exception as e:
+            print(f"Warning: PositionSpecific model failed: {e}")
+
+        # Try DeepEnsemble model if dependencies are available
+        try:
+            ensemble_model = self._train_model_by_type(train_df, feature_columns, "deep_ensemble")
+            test_metrics = self._compute_metrics(ensemble_model, test_df, feature_columns)
+            model_candidates["deep_ensemble"] = ensemble_model
+            model_metrics["deep_ensemble"] = test_metrics
+        except ImportError as e:
+            print(f"Warning: DeepEnsemble model not available (missing dependencies): {e}")
+        except Exception as e:
+            print(f"Warning: DeepEnsemble model failed: {e}")
+
+        if not model_candidates:
+            raise ValueError("No models could be trained successfully")
+
+        # Select best model based on MAE
+        best_model_type = min(model_metrics.keys(), key=lambda x: model_metrics[x].get("mae", float("inf")))
+        best_model = model_candidates[best_model_type]
+
+        print(f"Selected model: {best_model_type} (MAE: {model_metrics[best_model_type].get('mae', 'N/A')})")
+
+        return best_model, model_metrics
+
+    def _train_model_by_type(
+        self, dataset: pd.DataFrame, feature_columns: List[str], model_type: str
+    ) -> Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel]:
+        """Train a specific model type with proper error handling."""
+        features = dataset[feature_columns].to_numpy(dtype=float)
+        target = dataset[self.config.target].to_numpy(dtype=float)
+
+        if model_type == "ridge":
+            model = RidgeRegressionModel(alpha=self.config.model_alpha)
+            model.fit(features, target)
+            model.model_type = "ridge"
+            return model
+
+        elif model_type == "position_specific":
+            # Check for required dependencies
+            try:
+                import xgboost as xgb
+                import lightgbm as lgb
+            except ImportError as e:
+                raise ImportError(f"Missing required dependencies for position-specific model: {e}")
+
+            # Ensure position_code column exists
+            if "position_code" not in dataset.columns:
+                raise ValueError("position_code column required for position-specific training")
+
+            model = PositionSpecificModel(self.config)
+            model.fit(dataset, pd.Series(target))
+            model.model_type = "position_specific"
+            return model
+
+        elif model_type == "deep_ensemble":
+            # Check for required dependencies
+            try:
+                import tensorflow
+            except ImportError as e:
+                raise ImportError(f"Missing required dependencies for deep ensemble model: {e}")
+
+            model = DeepEnsembleModel(self.config)
+            model.fit(dataset, pd.Series(target))
+            model.model_type = "deep_ensemble"
+            return model
+
+        else:
+    def _run_enhanced_evaluation(
+        self,
+        model: Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel],
+        full_dataset: pd.DataFrame,
+        test_df: pd.DataFrame,
+        feature_columns: List[str]
+    ) -> Optional[EvaluationResult]:
+        """Run comprehensive evaluation using the AdvancedEvaluator."""
+        try:
+            evaluator = AdvancedEvaluator(self.config)
+
+            # Use test set for evaluation if available, otherwise use full dataset
+            eval_dataset = test_df if not test_df.empty else full_dataset
+            if eval_dataset.empty:
+                return None
+
+            # Get target values
+            y_true = eval_dataset[self.config.target].to_numpy(dtype=float)
+            X_eval = eval_dataset[feature_columns]
+
+            return evaluator.evaluate_model(
+                model=model,
+                X=X_eval,
+                y=pd.Series(y_true),
+                feature_names=feature_columns,
+                dataset=full_dataset,
+                model_name=getattr(model, 'model_type', 'ridge') if hasattr(model, 'model_type') else 'ridge'
+            )
+        except Exception as e:
+            print(f"Warning: Enhanced evaluation failed: {e}")
+            return None
+            raise ValueError(f"Unknown model type: {model_type}")
+
+    def _train_model(self, dataset: pd.DataFrame, feature_columns: List[str]) -> Union[RidgeRegressionModel, PositionSpecificModel, DeepEnsembleModel]:
+        """Fit the specified model type using the prepared dataset."""
+        return self._train_model_by_type(dataset, feature_columns, self.config.model_type)
 
 
 if __name__ == "__main__":

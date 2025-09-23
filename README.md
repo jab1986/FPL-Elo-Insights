@@ -21,6 +21,21 @@ Feel free to use the data from this repository in whatever way works best for yo
 Inspired by the amazing work of [vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League), this project aims to continue the spirit of open data in the FPL community. If you build something cool, let me know – I'd be happy to feature a link to your project!
 </details>
 
+## AI assistant setup (pinned)
+
+Copilot Chat auto-loads workspace instructions from `.github/`.
+
+- Primary guidelines: `.github/copilot-instructions.md`
+- Repo conventions: `AGENTS.md`
+- Troubleshooting: `docs/troubleshooting.md`
+- Pinned chat config: `.github/instructions/pinned-chat-setup.instructions.md`
+
+Notes:
+
+- Commands are Windows PowerShell by default; generate PowerShell-native syntax.
+- Backend/CLI use live Supabase only; verify via `/api/health/data`.
+- When errors occur, consult Context7/official docs first; record fixes in `docs/troubleshooting.md`.
+
 ## Machine Learning Predictions (Baseline)
 
 The machine learning pipeline in [`ml/`](ml/README.md) assembles historical gameweek data, engineers lagged and rolling features, layers in team and opponent context, and fits a lightweight ridge regression model to estimate upcoming gameweek points. Run `python -m ml.pipeline` to execute the baseline configuration; metrics, learned coefficients, history-based baselines and the generated predictions for both training and hold-out splits are stored under `ml/artifacts/`. Optional rolling-origin cross-validation can be toggled via `PipelineConfig` to stress-test generalisation as the system evolves towards the full prediction engine outlined in `ML_PREDICTION_PLAN.md`.
@@ -56,6 +71,115 @@ Common examples:
   ```
 
 When Supabase credentials or the public FPL API are unavailable the CLI automatically falls back to rich sample data so you can continue working offline.
+## Development Setup
+
+This section covers setting up the full development environment with both backend and frontend running locally.
+
+### Prerequisites
+- Python 3.12+ ([pyenv](https://github.com/pyenv/pyenv) recommended for version management)
+- Node.js 18+ and npm
+- Git
+
+### Quick Start (5 minutes)
+For a streamlined setup, follow the [Quick Start Guide](docs/quick-start.md) which covers the essential steps and common pitfalls.
+
+### Detailed Setup
+
+#### 1. Backend Setup
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# or .venv\Scripts\activate on Windows
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**⚠️ Critical Package Structure Requirements:**
+Ensure these `__init__.py` files exist (create if missing):
+- `app/__init__.py`
+- `app/services/__init__.py`
+- `app/routes/__init__.py`
+- `app/models/__init__.py`
+
+#### 2. Start Backend Server
+```bash
+# From the backend directory
+python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+**Verify it's working:**
+```bash
+curl http://localhost:8001/health
+# Should return: {"status":"healthy"}
+```
+
+#### 3. Frontend Setup (New Terminal)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Verify:**
+- Frontend runs on http://localhost:5173
+- Backend API accessible at http://localhost:8001/api
+
+#### 4. Testing CLI (Alternative Verification)
+```bash
+cd backend
+python -m backend.cli players top --limit 5
+```
+
+### Environment Configuration
+
+#### Development (Default)
+No environment variables required. The system automatically uses mock data for offline development.
+
+#### Production/Live Data (Optional)
+Create `backend/.env` with Supabase credentials:
+```env
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_KEY="your-service-role-key"
+```
+
+### Common Development Commands
+
+| Component | Command | Purpose |
+|-----------|---------|---------|
+| Backend | `python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload` | Start FastAPI server |
+| Backend | `python -m backend.cli players top --limit 5` | Test CLI without server |
+| Frontend | `npm run dev` | Start Vite dev server |
+| Frontend | `npm run build` | Build for production |
+| Testing | `pytest` | Run Python tests |
+| Testing | `npm run lint` | Run frontend linting |
+
+### Development Workflow
+
+1. **Start backend first** - The FastAPI server provides the API
+2. **Start frontend second** - React app connects to the API
+3. **Test with CLI** - Use CLI commands to verify core functionality
+4. **Check health endpoint** - `curl http://localhost:8001/health` for server status
+
+### Troubleshooting
+
+For common issues and solutions, see the [Troubleshooting Guide](docs/troubleshooting.md). Common problems include:
+
+- Port conflicts (multiple uvicorn processes)
+- Import path errors (relative vs absolute imports)
+- Missing `__init__.py` files
+- Environment configuration issues
+
+### Development vs Production
+
+| Aspect | Development | Production |
+|--------|-------------|------------|
+| Data | Mock data (automatic) | Live Supabase data |
+| Backend Port | 8001 | 8000 (typically) |
+| Frontend | http://localhost:5173 | Your domain |
+| Database | None required | Supabase |
+| Environment | No .env file needed | Requires .env with credentials |
+
 
 ## What's New for the 2025/26 Season?
 

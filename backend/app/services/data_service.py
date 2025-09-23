@@ -1,22 +1,51 @@
 import os
+from pathlib import Path
 from supabase import create_client, Client
 from typing import List, Dict, Any, Optional
 import pandas as pd
 from datetime import datetime
+from dotenv import load_dotenv, find_dotenv
 
 
 class DataService:
     def __init__(self):
+        # Load environment variables from the project root, robustly across processes
+        # 1) Try explicit path: repo_root/.env (services -> app -> backend -> repo root)
+        explicit_env_path = Path(__file__).resolve().parents[3] / ".env"
+        # 2) Fallback to auto-discovery from current working dir
+        discovered_env_path = find_dotenv(usecwd=True)
+
+        loaded_any = False
+        if explicit_env_path.exists():
+            load_dotenv(dotenv_path=str(explicit_env_path), override=False)
+            loaded_any = True
+        if discovered_env_path and os.path.exists(discovered_env_path):
+            load_dotenv(dotenv_path=discovered_env_path, override=False)
+            loaded_any = True
+
+        # Debug: show how .env was resolved (prints once on service init)
+        try:
+            print(
+                "[DataService] .env debug => explicit:", str(explicit_env_path),
+                "exists=", explicit_env_path.exists(), " discovered:", discovered_env_path,
+                "exists=", os.path.exists(discovered_env_path) if discovered_env_path else False,
+                " loaded_any=", loaded_any,
+            )
+        except Exception:
+            # Avoid any noise if printing fails
+            pass
+
         self.supabase_url = os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_KEY")
 
         if not self.supabase_url or not self.supabase_key:
             print(
                 "Warning: SUPABASE_URL and SUPABASE_KEY not found. "
-                "Using mock data for development."
+                "Supabase client is not configured; data access will fail until set."
             )
             self.supabase = None
         else:
+            print(f"✅ Supabase credentials found. Connecting to: {self.supabase_url}")
             self.supabase: Client = create_client(
                 self.supabase_url, self.supabase_key
             )

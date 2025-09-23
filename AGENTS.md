@@ -1,52 +1,22 @@
-# FPL-Elo-Insights – Agent Handbook
+# Repository Guidelines
 
-These guidelines apply to the entire repository. Follow them alongside the system instructions in every task.
+## Project Structure & Module Organization
+FPL-Elo-Insights couples a FastAPI + Typer service with a React 19 SPA. Backend route handlers live in `backend/app/routes/`, data models in `backend/app/models/`, and reusable services in `backend/app/services/`. The CLI entry point sits at `backend/cli.py`. Analytics pipelines and helpers reside in `ml/`, with supporting scripts in `ml/analysis/` and tests in `ml/tests/`. Frontend code is colocated under `frontend/src/`, while shared primitives sit in `frontend/src/components/ui/`. Season exports land in `data/` (read-only), with `docs/` and `scripts/` capturing reference guides and maintenance utilities.
 
-## 1. Repository map
-- **backend/** – FastAPI service plus a Typer-based CLI that proxies the same data access layer. Supabase provides real data, but the services fall back to the rich samples in `backend/app/services/mock_data.py` when credentials are missing.
-- **frontend/** – React 19 + TypeScript + Vite single-page application styled with Tailwind utilities and using @tanstack/react-query for data fetching.
-- **ml/** – Standalone machine-learning pipeline (NumPy/Pandas) with pytest coverage. Artifacts are written to `ml/artifacts/` by default.
-- **data/** – Season CSV exports. Treat these as source data; avoid committing regenerated large files unless explicitly requested.
-- **docs/** – Long-form documentation and project plans.
-- **scripts/** – Utility scripts for data ingestion/maintenance.
+## Build, Test, and Development Commands
+- `pip install -r backend/requirements.txt` installs backend and ML dependencies.
+- `npm install` inside `frontend/` resolves SPA packages; `npm run dev` launches the Vite dev server.
+- `python -m backend.cli players top --limit 5` exercises core services without Supabase credentials.
+- `pytest`, `npm run lint`, and `npm run build` are the standard pre-handoff verification trio.
 
-## 2. Environment & dependencies
-- Python tooling targets **Python 3.12**. Install dependencies with `pip install -r backend/requirements.txt`; this also brings in the ML stack (pandas, numpy). Add any new Python dependencies to this file.
-- Frontend tooling expects **Node 20+**. Install packages with `npm install` inside `frontend/`.
-- Supabase access uses the `SUPABASE_URL` and `SUPABASE_KEY` environment variables. When they are absent the backend/CLI should continue to work thanks to the mock data; do not attempt to hard-code credentials.
+## Coding Style & Naming Conventions
+Follow PEP 8 spacing, add type hints, and reuse shared helpers (e.g., `DataService`) rather than duplicating queries. Keep Python identifiers snake_case, React files kebab-case, and prefer functional components with strict props. Tailwind utilities are the default styling layer; do not introduce unused dependencies or non-ASCII characters.
 
-## 3. Required verification before delivering changes
-Always run the relevant checks after modifying code or configuration:
-- `pytest` from the repository root (covers the ML pipeline tests). If you only change frontend assets this run is still cheap; skip it only when you are certain no Python code is affected.
-- Frontend changes: `npm run lint` and `npm run build` inside `frontend/`.
-- If you alter FastAPI routes/services or CLI behaviour, exercise the affected command quickly (e.g. `python -m backend.cli players top --limit 5`) to ensure the mock-mode still works.
-- Document any skipped check in the final report with a justification.
+## Testing Guidelines
+Pytest drives backend and ML coverage; keep tests colocated (e.g., `ml/tests/test_feature.py`) and fixtures deterministic. Frontend quality gates rely on the lint/build pair; add component tests when behaviour or hooks change. Document any intentionally skipped verification command in `CURRENT_WORK_STATUS.md`.
 
-## 4. Coding guidelines
-### Python (backend/ml)
-- Follow PEP 8 spacing and naming. Prefer type hints (already prevalent in `backend/app/services` and `ml/` modules).
-- Keep functions pure where possible. Separate I/O concerns (Supabase calls, file writes) from computation to ease testing.
-- Reuse existing helpers (`DataService`, `engineer_features`, etc.) instead of duplicating logic. Extend dataclasses/enums cautiously to avoid breaking JSON serialisation to the frontend.
-- When adding CLI commands use Typer patterns present in `backend/cli.py` for consistency.
+## Commit & Pull Request Guidelines
+Write capitalised, imperative subjects (`Add Supabase health probe`). Group related edits, reference linked issues, and capture behaviour changes plus test evidence. PRs should note environment impacts, include screenshots or CLI output for UX shifts, and confirm a clean `git status`.
 
-### TypeScript/React
-- The app uses function components with hooks; avoid class components.
-- Compose UI with the Tailwind-friendly primitives in `frontend/src/components/ui/`. When new shared UI elements are needed, colocate them under `components/ui/` and keep props strongly typed.
-- Keep data fetching inside dedicated hooks (see `frontend/src/hooks/useFPLData.ts`). Prefer react-query mutations/queries rather than manual `fetch` calls in components.
-- Preserve routing conventions defined in `App.tsx` and `Layout.tsx` and ensure new pages register with the navigation array when appropriate.
-
-## 5. Data handling
-- The data directory contains large CSVs; do not rename/move them unless the task requires it. If you must generate new season snapshots, compress or prune them before committing.
-- Backend endpoints and ML pipeline assume consistent schema names (`players`, `matches`, `player_gameweek_stats`, etc.). When extending schemas, update both the FastAPI services and the frontend/ML consumers in the same change and document the new fields.
-
-## 6. Documentation & artefacts
-- Update README files or inline docstrings when behaviour changes. The top-level README advertises CLI commands and ML instructions—keep them truthful.
-- ML experiments persist outputs under `ml/artifacts/`. These files can be ignored for git commits unless the task explicitly asks to surface them.
-
-## 7. Delivery checklist
-Before finishing a task:
-1. Ensure all modified files are formatted and typed consistently with neighbouring code.
-2. Run the mandatory checks (section 3) and capture their outputs for the final report.
-3. Verify `git status` is clean after committing.
-4. Provide a clear summary of code and documentation changes referencing the relevant paths.
-
+## Environment & Error Resolution
+Set `SUPABASE_URL` and `SUPABASE_KEY` in `.env` and validate connectivity via `/api/health/data`. Keep secrets out of version control; use the shared vault. Consult Context7 MCP before troubleshooting, apply documented fixes first, and log successful resolutions in `docs/troubleshooting.md`.

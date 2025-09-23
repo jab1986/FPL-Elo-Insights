@@ -1,0 +1,385 @@
+{
+  "dashboard_name": "Model Performance Dashboard",
+  "description": "Comprehensive model performance monitoring and comparison for FPL prediction models",
+  "version": "1.0.0",
+  "tableau_version": "2023.1+",
+  "primary_data_source": "model_performance_metrics.csv",
+  "related_data_sources": [
+    "position_performance.csv",
+    "model_comparison.csv",
+    "cross_validation_results.csv",
+    "feature_importance.csv"
+  ],
+  "worksheets": [
+    {
+      "name": "Overview Metrics",
+      "description": "High-level performance metrics across all models",
+      "chart_type": "kpi_cards",
+      "primary_fields": [
+        {
+          "field": "value",
+          "aggregation": "AVG",
+          "filter": "metric IN ('mae', 'rmse', 'r2', 'mape')"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "show_sparks": true,
+        "color_scheme": "diverging_red_green",
+        "number_format": "decimal_2"
+      }
+    },
+    {
+      "name": "MAE by Model Type",
+      "description": "Mean Absolute Error comparison across model architectures",
+      "chart_type": "bar_chart",
+      "primary_fields": [
+        {
+          "field": "mae",
+          "aggregation": "AVG"
+        }
+      ],
+      "group_fields": [
+        "selected_model_type"
+      ],
+      "layout": {
+        "x": 600,
+        "y": 0,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "orientation": "horizontal",
+        "color_palette": "categorical_blue",
+        "show_labels": true
+      }
+    },
+    {
+      "name": "R² Score Trend",
+      "description": "Model R-squared performance over time",
+      "chart_type": "line_chart",
+      "primary_fields": [
+        {
+          "field": "r2",
+          "aggregation": "AVG"
+        }
+      ],
+      "date_fields": [
+        "model_version"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 300,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "line_style": "solid",
+        "markers": true,
+        "trend_line": true
+      }
+    },
+    {
+      "name": "Position Performance Matrix",
+      "description": "Performance breakdown by player position",
+      "chart_type": "heatmap",
+      "primary_fields": [
+        {
+          "field": "mae",
+          "aggregation": "AVG"
+        }
+      ],
+      "row_fields": [
+        "position"
+      ],
+      "column_fields": [
+        "selected_model_type"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 300,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_scheme": "sequential_blue",
+        "reverse_scale": true
+      }
+    },
+    {
+      "name": "Prediction Error Distribution",
+      "description": "Distribution of absolute prediction errors",
+      "chart_type": "histogram",
+      "primary_fields": [
+        {
+          "field": "absolute_error",
+          "aggregation": "COUNT"
+        }
+      ],
+      "layout": {
+        "x": 0,
+        "y": 600,
+        "width": 400,
+        "height": 300
+      },
+      "visual_settings": {
+        "bins": 20,
+        "show_normal_curve": true
+      }
+    },
+    {
+      "name": "Feature Importance Ranking",
+      "description": "Top contributing features to model predictions",
+      "chart_type": "horizontal_bar",
+      "primary_fields": [
+        {
+          "field": "importance",
+          "aggregation": "SUM"
+        }
+      ],
+      "group_fields": [
+        "feature"
+      ],
+      "sort_order": "descending",
+      "limit": 15,
+      "layout": {
+        "x": 400,
+        "y": 600,
+        "width": 600,
+        "height": 300
+      },
+      "visual_settings": {
+        "color_palette": "sequential_orange",
+        "show_percentages": true
+      }
+    },
+    {
+      "name": "Cross-Validation Stability",
+      "description": "Model performance stability across CV folds",
+      "chart_type": "box_plot",
+      "primary_fields": [
+        {
+          "field": "mae",
+          "aggregation": "NONE"
+        }
+      ],
+      "group_fields": [
+        "fold"
+      ],
+      "layout": {
+        "x": 0,
+        "y": 900,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "show_outliers": true,
+        "whisker_range": "1.5_IQR"
+      }
+    },
+    {
+      "name": "Model Confidence Intervals",
+      "description": "Confidence intervals for key metrics",
+      "chart_type": "error_bar",
+      "primary_fields": [
+        {
+          "field": "value",
+          "aggregation": "AVG"
+        }
+      ],
+      "error_fields": {
+        "lower": "ci_lower",
+        "upper": "ci_upper"
+      },
+      "group_fields": [
+        "metric"
+      ],
+      "layout": {
+        "x": 500,
+        "y": 900,
+        "width": 500,
+        "height": 300
+      },
+      "visual_settings": {
+        "error_bar_style": "capped",
+        "line_width": 2
+      }
+    }
+  ],
+  "dashboard_actions": {
+    "filters": [
+      {
+        "name": "Model Type",
+        "field": "selected_model_type",
+        "type": "single_value_list",
+        "default": "All"
+      },
+      {
+        "name": "Position",
+        "field": "position",
+        "type": "multiple_value_list",
+        "default": ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+      },
+      {
+        "name": "Date Range",
+        "field": "model_version",
+        "type": "date_range",
+        "default": "last_30_days"
+      },
+      {
+        "name": "Metric Threshold",
+        "field": "mae",
+        "type": "range_slider",
+        "default": {"min": 0, "max": 10}
+      }
+    ],
+    "parameters": [
+      {
+        "name": "Target Metric",
+        "field": "metric",
+        "type": "single_value_list",
+        "default": "mae",
+        "allowed_values": ["mae", "rmse", "r2", "mape"]
+      },
+      {
+        "name": "Confidence Level",
+        "field": "confidence_level",
+        "type": "single_value_list",
+        "default": "95%",
+        "allowed_values": ["90%", "95%", "99%"]
+      }
+    ],
+    "highlighters": [
+      {
+        "name": "Best Performer",
+        "condition": "MIN([mae])",
+        "style": "bold_border"
+      },
+      {
+        "name": "Outlier Detection",
+        "condition": "[mae] > AVG([mae]) + 2*STDEV([mae])",
+        "style": "red_fill"
+      }
+    ]
+  },
+  "calculated_fields": [
+    {
+      "name": "Performance Rank",
+      "formula": "RANK_UNIQUE([mae], 'asc')",
+      "description": "Rank models by MAE performance"
+    },
+    {
+      "name": "Improvement Over Baseline",
+      "formula": "([baseline_mae] - [mae]) / [baseline_mae]",
+      "description": "Percentage improvement over baseline model"
+    },
+    {
+      "name": "Normalized Error",
+      "formula": "[mae] / [actual_mean]",
+      "description": "Error normalized by average points"
+    },
+    {
+      "name": "Confidence Width",
+      "formula": "[ci_upper] - [ci_lower]",
+      "description": "Width of confidence interval"
+    }
+  ],
+  "layout_containers": [
+    {
+      "name": "Overview Tab",
+      "type": "tab",
+      "worksheets": ["Overview Metrics", "MAE by Model Type"],
+      "active": true
+    },
+    {
+      "name": "Position Comparison Tab",
+      "type": "tab",
+      "worksheets": ["Position Performance Matrix", "R² Score Trend"],
+      "active": false
+    },
+    {
+      "name": "Model Comparison Tab",
+      "type": "tab",
+      "worksheets": ["Model Confidence Intervals", "Cross-Validation Stability"],
+      "active": false
+    },
+    {
+      "name": "Feature Importance Tab",
+      "type": "tab",
+      "worksheets": ["Feature Importance Ranking", "Prediction Error Distribution"],
+      "active": false
+    }
+  ],
+  "story_points": [
+    {
+      "name": "Executive Summary",
+      "description": "High-level model performance overview",
+      "captions": [
+        "Current model MAE: {AVG([mae])}",
+        "Best performing position: {MIN([position], [mae])}",
+        "Model improvement trend: {TREND([mae])}"
+      ]
+    },
+    {
+      "name": "Detailed Analysis",
+      "description": "Deep dive into model performance metrics",
+      "captions": [
+        "Cross-validation stability: {STDEV([cv_mae])}",
+        "Feature importance concentration: {TOP([feature], [importance])}",
+        "Position-specific insights: {POSITION([position], [mae])}"
+      ]
+    }
+  ],
+  "data_source_connections": [
+    {
+      "name": "Model Performance Data",
+      "file": "model_performance_metrics.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    },
+    {
+      "name": "Position Metrics",
+      "file": "position_performance.csv",
+      "refresh_schedule": "after_model_training",
+      "connection_type": "csv"
+    }
+  ],
+  "alerts": [
+    {
+      "name": "Performance Degradation",
+      "condition": "[mae] > [baseline_mae] * 1.1",
+      "threshold": "warning",
+      "notification": "Model performance has degraded by 10%"
+    },
+    {
+      "name": "Position Bias",
+      "condition": "MAX([position_mae]) > 2 * MIN([position_mae])",
+      "threshold": "warning",
+      "notification": "Significant performance variation across positions"
+    }
+  ],
+  "export_settings": {
+    "image_formats": ["png", "pdf"],
+    "data_formats": ["csv", "excel"],
+    "scheduled_exports": [
+      {
+        "name": "Weekly Performance Report",
+        "format": "pdf",
+        "schedule": "weekly_monday_9am",
+        "recipients": ["ml-team@company.com"]
+      }
+    ]
+  },
+  "metadata": {
+    "created_by": "ML Engineering Team",
+    "created_date": "2024-01-01",
+    "last_modified": "2024-01-01",
+    "tags": ["ml", "monitoring", "performance", "fpl"],
+    "description": "Production-ready Tableau dashboard for ML model performance monitoring"
+  }
+}

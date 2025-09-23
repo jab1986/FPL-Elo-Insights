@@ -14,9 +14,8 @@ from dotenv import load_dotenv
 # Load environment variables first before importing services
 load_dotenv()
 
-from app.services import mock_data
-from app.services.data_service import data_service
-from app.services.fpl_service import fpl_service
+from .app.services.data_service import data_service
+from .app.services.fpl_service import fpl_service
 
 app = typer.Typer(help="FPL Insights command line interface")
 players_app = typer.Typer(help="Player related commands")
@@ -57,16 +56,13 @@ def _error(message: str) -> None:
     typer.secho(message, fg=typer.colors.RED)
 
 
-def _fetch_with_fallback(
-    fetcher: Callable[[], Any], fallback: Callable[[], Any], dataset: str
-) -> Any:
+def _fetch_required(fetcher: Callable[[], Any], dataset: str) -> Any:
+    """Fetch data from live service; exit on failure without using samples."""
     try:
         return fetcher()
     except Exception as exc:  # pragma: no cover - defensive fallback
-        _warn(
-            f"Unable to retrieve {dataset} from the live service ({exc}). Using sample data."
-        )
-        return fallback()
+        _error(f"Unable to retrieve {dataset} from the live service: {exc}")
+        raise typer.Exit(code=1)
 
 
 @players_app.command("list")
@@ -115,11 +111,7 @@ def list_players(
     if gameweek is not None:
         filters["gameweek"] = gameweek
 
-    players = _fetch_with_fallback(
-        lambda: data_service.get_players(filters),
-        lambda: mock_data.sample_players(filters),
-        "players",
-    )
+    players = _fetch_required(lambda: data_service.get_players(filters), "players")
     _print_result(players)
 
 
@@ -130,10 +122,8 @@ def get_player(player_id: int = typer.Argument(..., help="Player identifier")) -
     try:
         player = data_service.get_player_by_id(player_id)
     except Exception as exc:  # pragma: no cover - defensive fallback
-        _warn(
-            f"Unable to retrieve player {player_id} from the live service ({exc}). Using sample data."
-        )
-        player = mock_data.sample_player(player_id)
+        _error(f"Unable to retrieve player {player_id} from the live service: {exc}")
+        raise typer.Exit(code=1)
 
     if not player:
         _error(f"Player {player_id} not found.")
@@ -148,11 +138,7 @@ def top_players(
 ) -> None:
     """Display top performing players."""
 
-    players = _fetch_with_fallback(
-        lambda: data_service.get_top_players(limit),
-        lambda: mock_data.sample_top_players(limit),
-        "top players",
-    )
+    players = _fetch_required(lambda: data_service.get_top_players(limit), "top players")
     _print_result(players)
 
 
@@ -165,11 +151,7 @@ def search_players(
     if len(query.strip()) < 3:
         _warn("Search queries work best with at least 3 characters.")
 
-    players = _fetch_with_fallback(
-        lambda: data_service.search_players(query),
-        lambda: mock_data.sample_search_players(query),
-        "players",
-    )
+    players = _fetch_required(lambda: data_service.search_players(query), "players")
     _print_result(players)
 
 
@@ -177,11 +159,7 @@ def search_players(
 def list_teams() -> None:
     """List all teams."""
 
-    teams = _fetch_with_fallback(
-        data_service.get_teams,
-        mock_data.sample_teams,
-        "teams",
-    )
+    teams = _fetch_required(data_service.get_teams, "teams")
     _print_result(teams)
 
 
@@ -192,10 +170,8 @@ def get_team(team_id: int = typer.Argument(..., help="Team identifier")) -> None
     try:
         team = data_service.get_team_by_id(team_id)
     except Exception as exc:  # pragma: no cover - defensive fallback
-        _warn(
-            f"Unable to retrieve team {team_id} from the live service ({exc}). Using sample data."
-        )
-        team = mock_data.sample_team(team_id)
+        _error(f"Unable to retrieve team {team_id} from the live service: {exc}")
+        raise typer.Exit(code=1)
 
     if not team:
         _error(f"Team {team_id} not found.")
@@ -213,11 +189,7 @@ def search_teams(
     if len(query.strip()) < 2:
         _warn("Search queries work best with at least 2 characters.")
 
-    teams = _fetch_with_fallback(
-        lambda: data_service.search_teams(query),
-        lambda: mock_data.sample_search_teams(query),
-        "teams",
-    )
+    teams = _fetch_required(lambda: data_service.search_teams(query), "teams")
     _print_result(teams)
 
 
@@ -229,11 +201,7 @@ def list_matches(
 ) -> None:
     """List fixtures and results."""
 
-    matches = _fetch_with_fallback(
-        lambda: data_service.get_matches(gameweek),
-        lambda: mock_data.sample_matches(gameweek),
-        "matches",
-    )
+    matches = _fetch_required(lambda: data_service.get_matches(gameweek), "matches")
     _print_result(matches)
 
 
@@ -244,10 +212,8 @@ def get_match(match_id: int = typer.Argument(..., help="Match identifier")) -> N
     try:
         match = data_service.get_match_by_id(match_id)
     except Exception as exc:  # pragma: no cover - defensive fallback
-        _warn(
-            f"Unable to retrieve match {match_id} from the live service ({exc}). Using sample data."
-        )
-        match = mock_data.sample_match(match_id)
+        _error(f"Unable to retrieve match {match_id} from the live service: {exc}")
+        raise typer.Exit(code=1)
 
     if not match:
         _error(f"Match {match_id} not found.")
@@ -263,9 +229,8 @@ def list_match_stats(
 ) -> None:
     """List player match statistics."""
 
-    stats = _fetch_with_fallback(
+    stats = _fetch_required(
         lambda: data_service.get_player_match_stats(match_id=match_id, player_id=player_id),
-        lambda: mock_data.sample_player_match_stats(match_id=match_id, player_id=player_id),
         "player match stats",
     )
     _print_result(stats)
@@ -275,11 +240,7 @@ def list_match_stats(
 def list_gameweeks() -> None:
     """List gameweek summaries."""
 
-    summaries = _fetch_with_fallback(
-        data_service.get_gameweek_summaries,
-        mock_data.sample_gameweek_summaries,
-        "gameweek summaries",
-    )
+    summaries = _fetch_required(data_service.get_gameweek_summaries, "gameweek summaries")
     _print_result(summaries)
 
 
@@ -290,10 +251,8 @@ def current_gameweek() -> None:
     try:
         summary = data_service.get_current_gameweek()
     except Exception as exc:  # pragma: no cover - defensive fallback
-        _warn(
-            f"Unable to determine the current gameweek from the live service ({exc}). Using sample data."
-        )
-        summary = mock_data.sample_current_gameweek()
+        _error(f"Unable to determine the current gameweek from the live service: {exc}")
+        raise typer.Exit(code=1)
 
     if not summary:
         _error("Gameweek information is unavailable.")
@@ -306,11 +265,7 @@ def current_gameweek() -> None:
 def dashboard_stats() -> None:
     """Display aggregated dashboard statistics."""
 
-    stats = _fetch_with_fallback(
-        data_service.get_dashboard_stats,
-        mock_data.sample_dashboard_stats,
-        "dashboard stats",
-    )
+    stats = _fetch_required(data_service.get_dashboard_stats, "dashboard stats")
     _print_result(stats)
 
 
@@ -328,26 +283,14 @@ def show_user_team(
 
     try:
         result = asyncio.run(_fetch())
-    except httpx.HTTPStatusError as exc:  # pragma: no cover - network fallback
-        if team_id == 266343:
-            _warn(
-                "Live FPL service is unavailable or blocked; using bundled sample team data."
-            )
-            result = fpl_service.get_sample_user_team()
-        else:
-            _error(
-                f"FPL service responded with {exc.response.status_code}: {exc.response.text}"
-            )
-            raise typer.Exit(code=1)
-    except Exception as exc:  # pragma: no cover - defensive fallback
-        if team_id == 266343:
-            _warn(
-                "Unable to fetch live team data; returning the bundled sample team payload."
-            )
-            result = fpl_service.get_sample_user_team()
-        else:
-            _error(f"Unable to fetch team {team_id}: {exc}")
-            raise typer.Exit(code=1)
+    except httpx.HTTPStatusError as exc:  # pragma: no cover - network
+        _error(
+            f"FPL service responded with {exc.response.status_code}: {exc.response.text}"
+        )
+        raise typer.Exit(code=1)
+    except Exception as exc:  # pragma: no cover - defensive
+        _error(f"Unable to fetch team {team_id}: {exc}")
+        raise typer.Exit(code=1)
 
     _print_result(result)
 

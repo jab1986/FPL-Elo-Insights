@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(code:*)",
+      "Bash(ls:*)",
+      "Read(//c/Users/joebr/AppData/Roaming/Code/User/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

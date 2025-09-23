@@ -192,10 +192,19 @@ def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.Dat
     frame = raw.copy()
     _coerce_numeric_columns(frame, _NUMERIC_BASE_COLUMNS)
 
+    # Handle NaN values before type casting to prevent IntCastingNaNError
+    frame["player_id"] = pd.to_numeric(frame["player_id"], errors="coerce")
+    frame = frame.dropna(subset=["player_id"])
     frame["player_id"] = frame["player_id"].astype(int)
+
     if "team_id" in frame.columns:
+        frame["team_id"] = pd.to_numeric(frame["team_id"], errors="coerce")
+        frame = frame.dropna(subset=["team_id"])
         frame["team_id"] = frame["team_id"].astype(int)
+
     if "opponent_team_id" in frame.columns:
+        frame["opponent_team_id"] = pd.to_numeric(frame["opponent_team_id"], errors="coerce")
+        frame = frame.dropna(subset=["opponent_team_id"])
         frame["opponent_team_id"] = frame["opponent_team_id"].astype(int)
     frame.sort_values(["season", "player_id", "gameweek"], inplace=True)
 
@@ -297,6 +306,8 @@ def engineer_features(raw: pd.DataFrame, config: PipelineConfig) -> Tuple[pd.Dat
     feature_columns = [column for column in feature_candidates if column in frame.columns]
 
     frame = frame.dropna(subset=[config.target] + [col for col in feature_columns if "lag" in col or "rolling" in col])
+    # Replace inf values with NaN and handle downcasting properly
+    pd.set_option('future.no_silent_downcasting', True)
     frame = frame.replace([np.inf, -np.inf], np.nan).dropna(subset=feature_columns + [config.target])
 
     return frame.reset_index(drop=True), feature_columns

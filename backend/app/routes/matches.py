@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
 
 from app.models import MatchBase
-from app.services import mock_data
 from app.services.data_service import data_service
 
 router = APIRouter()
@@ -15,9 +14,8 @@ async def get_matches(
     """Get matches, optionally filtered by gameweek"""
     try:
         return data_service.get_matches(gameweek)
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_matches(gameweek)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Match data unavailable (Supabase not configured or unreachable)") from exc
 
 
 @router.get("/matches/{match_id}", response_model=MatchBase)
@@ -26,8 +24,7 @@ async def get_match(match_id: int):
     try:
         match = data_service.get_match_by_id(match_id)
         if not match:
-            return {"error": "Match not found"}
+            raise HTTPException(status_code=404, detail="Match not found")
         return match
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_match(match_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Match data unavailable (Supabase not configured or unreachable)") from exc

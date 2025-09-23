@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
 from app.models import PlayerBase, PlayerFilters
-from app.services import mock_data
 from app.services.data_service import data_service
 
 router = APIRouter()
@@ -37,9 +36,8 @@ async def get_players(
     try:
         players = data_service.get_players(filters)
         return players
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_players(filters)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Player data unavailable (Supabase not configured or unreachable)") from exc
 
 
 @router.get("/players/{player_id}", response_model=PlayerBase)
@@ -48,11 +46,10 @@ async def get_player(player_id: int):
     try:
         player = data_service.get_player_by_id(player_id)
         if not player:
-            return {"error": "Player not found"}
+            raise HTTPException(status_code=404, detail="Player not found")
         return player
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_player(player_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Player data unavailable (Supabase not configured or unreachable)") from exc
 
 
 @router.get("/players/top/{limit}", response_model=List[PlayerBase])
@@ -60,9 +57,8 @@ async def get_top_players(limit: int = 10):
     """Get top performing players"""
     try:
         return data_service.get_top_players(limit)
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_top_players(limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Top players unavailable (Supabase not configured or unreachable)") from exc
 
 
 @router.get("/players/search", response_model=List[PlayerBase])
@@ -70,6 +66,5 @@ async def search_players(q: str = Query(..., description="Search query")):
     """Search players by name"""
     try:
         return data_service.search_players(q)
-    except Exception:
-        # Return mock data for development
-        return mock_data.sample_search_players(q)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Search unavailable (Supabase not configured or unreachable)") from exc

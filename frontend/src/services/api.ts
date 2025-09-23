@@ -7,7 +7,7 @@ import type {
   UserTeamResponse,
 } from '../types/fpl';
 
-const API_BASE_URL = 'http://localhost:8000/api'; // Will be configurable later
+const API_BASE_URL = 'http://localhost:8001/api'; // Will be configurable later
 
 class ApiService {
   private async fetchData<T>(endpoint: string): Promise<T> {

@@ -56,6 +56,12 @@ class PipelineConfig:
     model_alpha: float = 5.0
     """Regularisation strength for the custom ridge regression model."""
 
+    model_type: str = "ridge"
+    """Model architecture to use: 'ridge', 'position_specific', 'deep_ensemble', or 'auto'."""
+
+    model_comparison: bool = False
+    """Whether to compare multiple model architectures and select the best performing one."""
+
     random_state: Optional[int] = None
     """Placeholder for compatibility with future stochastic models."""
 
