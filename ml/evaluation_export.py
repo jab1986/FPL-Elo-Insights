@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, Any, Optional
+from numbers import Real
 import json
 
 import pandas as pd
@@ -32,8 +33,6 @@ def export_evaluation_for_tableau(
 
     if not pipeline_result.evaluation:
         raise ValueError("Pipeline result does not contain evaluation data")
-
-    evaluator = AdvancedEvaluator(pipeline_result.config)
 
     # Export evaluation metrics
     metrics_df = pd.DataFrame([pipeline_result.evaluation.metrics])
@@ -122,7 +121,8 @@ def generate_evaluation_report(
         raise ValueError("Pipeline result does not contain evaluation data")
 
     # Generate the main report
-    report = pipeline_result.evaluation.generate_evaluation_report(
+    evaluator = AdvancedEvaluator(pipeline_result.config)
+    report = evaluator.generate_evaluation_report(
         evaluation=pipeline_result.evaluation,
         model_name=pipeline_result.selected_model_type or "Model"
     )
@@ -153,13 +153,17 @@ def generate_evaluation_report(
                     y_true = test_predictions["actual_points"].to_numpy()
                     y_pred = test_predictions["predicted_points"].to_numpy()
 
-                    plot_data = pipeline_result.evaluation.generate_calibration_plots(
+                    plot_data = evaluator.generate_calibration_plots(
                         y_true, y_pred, output_dir
                     )
 
                     # Add plot information to report
                     report += f"\n\n## Calibration Analysis\n\n"
-                    report += f"Calibration plots have been saved to: {plot_data.get('calibration_curve', {}).get('plot_path', 'N/A')}\n\n"
+                    scatter_path = plot_data.get('prediction_vs_actual', {}).get('plot_path', 'N/A')
+                    report += f"Prediction vs actual chart: {scatter_path}\n\n"
+                    bias_path = plot_data.get('bin_bias', {}).get('plot_path')
+                    if bias_path:
+                        report += f"Bias by bin chart: {bias_path}\n\n"
 
                     # Add calibration metrics summary
                     if pipeline_result.evaluation.calibration_metrics:
@@ -167,7 +171,8 @@ def generate_evaluation_report(
                         report += "| Metric | Value |\n"
                         report += "|--------|-------|\n"
                         for metric, value in pipeline_result.evaluation.calibration_metrics.items():
-                            report += f"| {metric.upper()} | {value".4f"} |\n"
+                            formatted = f"{float(value):.4f}" if isinstance(value, Real) else str(value)
+                            report += f"| {metric.upper()} | {formatted} |\n"
 
                 except Exception as e:
                     report += f"\n\n## Calibration Analysis\n\n"
