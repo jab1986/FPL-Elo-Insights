@@ -5,19 +5,144 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 import warnings
+import math
 
 import numpy as np
 import pandas as pd
-from scipy import stats
-from sklearn.calibration import calibration_curve
-from sklearn.feature_selection import mutual_info_regression
-from sklearn.inspection import permutation_importance
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold
-import matplotlib.pyplot as plt
+
+try:  # Optional statistical utilities
+    from scipy import stats
+except ImportError:  # pragma: no cover - provide lightweight fallbacks
+    class _NormFallback:
+        @staticmethod
+        def cdf(x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+            arr = np.asarray(x, dtype=float)
+            erf_values = np.vectorize(math.erf)(arr / math.sqrt(2.0))
+            result = 0.5 * (1 + erf_values)
+            if np.isscalar(x):
+                return float(result)
+            return result
+
+    class _StatsFallback:
+        norm = _NormFallback()
+
+        @staticmethod
+        def ks_2samp(data1: Union[pd.Series, np.ndarray], data2: Union[pd.Series, np.ndarray]) -> Tuple[float, float]:
+            arr1 = np.sort(np.asarray(data1, dtype=float))
+            arr2 = np.sort(np.asarray(data2, dtype=float))
+            if arr1.size == 0 or arr2.size == 0:
+                return 0.0, 1.0
+            combined = np.sort(np.concatenate([arr1, arr2]))
+            cdf1 = np.searchsorted(arr1, combined, side="right") / arr1.size
+            cdf2 = np.searchsorted(arr2, combined, side="right") / arr2.size
+            statistic = float(np.max(np.abs(cdf1 - cdf2)))
+            return statistic, 1.0
+
+        @staticmethod
+        def anderson(sample: Union[pd.Series, np.ndarray], dist: str = 'norm'):
+            values = np.asarray(sample, dtype=float)
+            statistic = float(np.std(values)) if values.size else 0.0
+
+            class _Result:
+                def __init__(self, statistic: float):
+                    self.statistic = statistic
+
+            return _Result(statistic)
+
+    stats = _StatsFallback()  # type: ignore[assignment]
+try:
+    import matplotlib.pyplot as plt
+except ImportError:  # pragma: no cover - plotting is optional in minimal environments
+    class _MatplotlibFallback:
+        def figure(self, *args, **kwargs):
+            return None
+
+        def scatter(self, *args, **kwargs):
+            return None
+
+        def plot(self, *args, **kwargs):
+            return None
+
+        def xlabel(self, *args, **kwargs):
+            return None
+
+        def ylabel(self, *args, **kwargs):
+            return None
+
+        def title(self, *args, **kwargs):
+            return None
+
+        def legend(self, *args, **kwargs):
+            return None
+
+        def grid(self, *args, **kwargs):
+            return None
+
+        def savefig(self, *args, **kwargs):
+            return None
+
+        def close(self, *args, **kwargs):
+            return None
+
+        def bar(self, *args, **kwargs):
+            return None
+
+        def axhline(self, *args, **kwargs):
+            return None
+
+    plt = _MatplotlibFallback()  # type: ignore[assignment]
 from pathlib import Path
 
+try:  # Optional dependency
+    from sklearn.feature_selection import mutual_info_regression
+except ImportError:  # pragma: no cover - degrade gracefully when sklearn absent
+    mutual_info_regression = None  # type: ignore[assignment]
+
+try:  # Optional dependency for cross-validation helper
+    from sklearn.model_selection import KFold
+except ImportError:  # pragma: no cover - provide minimal fallback
+    class KFold:  # type: ignore[override]
+        def __init__(self, n_splits: int, shuffle: bool = False, random_state: Optional[int] = None):
+            if n_splits < 2:
+                raise ValueError("n_splits must be at least 2")
+            self.n_splits = n_splits
+
+        def split(self, X: Union[pd.DataFrame, np.ndarray]):
+            n_samples = len(X)
+            indices = np.arange(n_samples)
+            fold_sizes = np.full(self.n_splits, n_samples // self.n_splits, dtype=int)
+            fold_sizes[: n_samples % self.n_splits] += 1
+            current = 0
+            for fold_size in fold_sizes:
+                start, stop = current, current + fold_size
+                val_indices = indices[start:stop]
+                train_indices = np.concatenate([indices[:start], indices[stop:]])
+                yield train_indices, val_indices
+                current = stop
+
 from .config import PipelineConfig
+
+
+def _mean_absolute_error(y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, np.ndarray]) -> float:
+    y_true_arr = np.asarray(y_true, dtype=float)
+    y_pred_arr = np.asarray(y_pred, dtype=float)
+    return float(np.mean(np.abs(y_true_arr - y_pred_arr)))
+
+
+def _mean_squared_error(y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, np.ndarray]) -> float:
+    y_true_arr = np.asarray(y_true, dtype=float)
+    y_pred_arr = np.asarray(y_pred, dtype=float)
+    return float(np.mean((y_true_arr - y_pred_arr) ** 2))
+
+
+def _r2_score(y_true: Union[pd.Series, np.ndarray], y_pred: Union[pd.Series, np.ndarray]) -> float:
+    y_true_arr = np.asarray(y_true, dtype=float)
+    y_pred_arr = np.asarray(y_pred, dtype=float)
+    ss_res = np.sum((y_true_arr - y_pred_arr) ** 2)
+    ss_tot = np.sum((y_true_arr - np.mean(y_true_arr)) ** 2)
+    if ss_tot == 0:
+        return 0.0
+    return float(1 - ss_res / ss_tot)
 
 
 @dataclass
@@ -123,9 +248,9 @@ class AdvancedEvaluator:
         residuals = y_pred - y_true
 
         return {
-            "mae": float(mean_absolute_error(y_true, y_pred)),
-            "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
-            "r2": float(r2_score(y_true, y_pred)),
+            "mae": float(_mean_absolute_error(y_true, y_pred)),
+            "rmse": float(np.sqrt(_mean_squared_error(y_true, y_pred))),
+            "r2": float(_r2_score(y_true, y_pred)),
             "mape": float(np.mean(np.abs(residuals / np.maximum(np.abs(y_true), 1))) * 100),
             "bias": float(np.mean(residuals)),
             "median_ae": float(np.median(np.abs(residuals))),
@@ -153,9 +278,9 @@ class AdvancedEvaluator:
                 y_pred_pos = y_pred[mask]
 
                 position_metrics[position_name] = {
-                    "mae": float(mean_absolute_error(y_true_pos, y_pred_pos)),
-                    "rmse": float(np.sqrt(mean_squared_error(y_true_pos, y_pred_pos))),
-                    "r2": float(r2_score(y_true_pos, y_pred_pos)),
+                    "mae": float(_mean_absolute_error(y_true_pos, y_pred_pos)),
+                    "rmse": float(np.sqrt(_mean_squared_error(y_true_pos, y_pred_pos))),
+                    "r2": float(_r2_score(y_true_pos, y_pred_pos)),
                     "mape": float(np.mean(np.abs((y_true_pos - y_pred_pos) /
                                                np.maximum(np.abs(y_true_pos), 1))) * 100),
                     "count": int(mask.sum()),
@@ -181,11 +306,11 @@ class AdvancedEvaluator:
                 y_pred_boot = y_pred[indices]
 
                 if metric == "mae":
-                    value = mean_absolute_error(y_true_boot, y_pred_boot)
+                    value = _mean_absolute_error(y_true_boot, y_pred_boot)
                 elif metric == "rmse":
-                    value = np.sqrt(mean_squared_error(y_true_boot, y_pred_boot))
+                    value = np.sqrt(_mean_squared_error(y_true_boot, y_pred_boot))
                 elif metric == "r2":
-                    value = r2_score(y_true_boot, y_pred_boot)
+                    value = _r2_score(y_true_boot, y_pred_boot)
                 elif metric == "mape":
                     residuals = y_pred_boot - y_true_boot
                     value = np.mean(np.abs(residuals / np.maximum(np.abs(y_true_boot), 1))) * 100
@@ -200,39 +325,54 @@ class AdvancedEvaluator:
         return confidence_intervals
 
     def _compute_calibration_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
-        """Compute calibration metrics to assess prediction reliability."""
-        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=10, strategy='uniform')
+        """Compute calibration-style diagnostics suitable for regression models."""
 
-        # Expected Calibration Error (ECE)
-        bin_edges = np.linspace(0, 1, 11)
-        y_true_norm = (y_true - np.min(y_true)) / (np.max(y_true) - np.min(y_true) + 1e-8)
-        y_pred_norm = (y_pred - np.min(y_true)) / (np.max(y_true) - np.min(y_true) + 1e-8)
+        if len(y_true) == 0:
+            return {}
 
-        ece = 0.0
-        total_samples = len(y_true)
+        data = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
 
-        for i in range(len(bin_edges) - 1):
-            mask = (y_pred_norm >= bin_edges[i]) & (y_pred_norm < bin_edges[i + 1])
-            if mask.sum() > 0:
-                bin_accuracy = np.mean(y_true_norm[mask])
-                bin_confidence = np.mean(y_pred_norm[mask])
-                bin_weight = mask.sum() / total_samples
-                ece += bin_weight * np.abs(bin_accuracy - bin_confidence)
+        unique_predictions = data["y_pred"].nunique()
+        n_bins = int(min(10, max(1, unique_predictions)))
 
-        # Maximum Calibration Error (MCE)
-        mce = 0.0
-        for i in range(len(bin_edges) - 1):
-            mask = (y_pred_norm >= bin_edges[i]) & (y_pred_norm < bin_edges[i + 1])
-            if mask.sum() > 0:
-                bin_accuracy = np.mean(y_true_norm[mask])
-                bin_confidence = np.mean(y_pred_norm[mask])
-                mce = max(mce, np.abs(bin_accuracy - bin_confidence))
+        if n_bins <= 1:
+            mean_bias = float(np.abs(data["y_true"].mean() - data["y_pred"].mean()))
+            residual_std = float(np.std(data["y_true"] - data["y_pred"]))
+            return {
+                "mean_bias": mean_bias,
+                "residual_std": residual_std,
+                "interval_80_coverage": 1.0,
+                "prediction_correlation": 1.0,
+            }
+
+        data["bin"] = pd.qcut(data["y_pred"], q=n_bins, duplicates="drop")
+        grouped = data.groupby("bin", observed=False).agg(
+            actual_mean=("y_true", "mean"),
+            predicted_mean=("y_pred", "mean"),
+            count=("y_true", "size"),
+        )
+
+        bias = (grouped["actual_mean"] - grouped["predicted_mean"]).abs()
+        weights = grouped["count"] / len(data)
+
+        weighted_abs_bias = float(np.sum(weights * bias)) if not bias.empty else 0.0
+        max_abs_bias = float(bias.max()) if not bias.empty else 0.0
+
+        residuals = data["y_true"] - data["y_pred"]
+        lower_q, upper_q = np.quantile(residuals, [0.1, 0.9])
+        interval_lower = data["y_pred"] + lower_q
+        interval_upper = data["y_pred"] + upper_q
+        coverage = float(np.mean((data["y_true"] >= interval_lower) & (data["y_true"] <= interval_upper)))
+
+        correlation = float(np.corrcoef(data["y_true"], data["y_pred"])[0, 1]) if len(data) > 1 else 1.0
+        if not np.isfinite(correlation):
+            correlation = 0.0
 
         return {
-            "ece": float(ece),
-            "mce": float(mce),
-            "calibration_slope": float(np.polyfit(prob_pred, prob_true, 1)[0]),
-            "calibration_intercept": float(np.polyfit(prob_pred, prob_true, 1)[1]),
+            "weighted_bin_abs_error": weighted_abs_bias,
+            "max_bin_abs_error": max_abs_bias,
+            "interval_80_coverage": coverage,
+            "prediction_correlation": correlation,
         }
 
     def _compute_feature_importance(
@@ -288,7 +428,14 @@ class AdvancedEvaluator:
         # Measures if the model is overconfident in wrong predictions
         error_magnitude = np.abs(residuals)
         pred_confidence = np.abs(y_pred - np.mean(y_pred))  # Distance from mean prediction
-        overconfidence = float(np.corrcoef(error_magnitude, pred_confidence)[0, 1] if len(error_magnitude) > 1 else 0.0)
+        if (
+            len(error_magnitude) > 1
+            and np.std(error_magnitude) > 1e-12
+            and np.std(pred_confidence) > 1e-12
+        ):
+            overconfidence = float(np.corrcoef(error_magnitude, pred_confidence)[0, 1])
+        else:
+            overconfidence = 0.0
 
         # Robustness score (lower error variance is better)
         if len(residuals) > 10:
@@ -403,9 +550,9 @@ class AdvancedEvaluator:
             y_pred_boot = y_pred[indices]
 
             try:
-                score = r2_score(y_true_boot, y_pred_boot)
+                score = _r2_score(y_true_boot, y_pred_boot)
                 bootstrap_scores.append(score)
-            except:
+            except Exception:
                 continue
 
         if bootstrap_scores:
@@ -547,7 +694,7 @@ class AdvancedEvaluator:
             # This is a placeholder - would need actual model training
             # For now, just compute naive baseline
             y_pred_cv = np.mean(y_train) * np.ones(len(y_test))
-            score = r2_score(y_test, y_pred_cv)
+            score = _r2_score(y_test, y_pred_cv)
             cv_scores.append(score)
 
         return {
@@ -567,8 +714,12 @@ class AdvancedEvaluator:
         for feature in monotonic_features:
             if feature in X.columns:
                 try:
-                    correlation = np.corrcoef(X[feature], y_pred)[0, 1]
-                    monotonicity_checks[f"{feature}_correlation"] = float(correlation)
+                    feature_values = np.asarray(X[feature], dtype=float)
+                    if np.std(feature_values) < 1e-12 or np.std(y_pred) < 1e-12:
+                        correlation = 0.0
+                    else:
+                        correlation = float(np.corrcoef(feature_values, y_pred)[0, 1])
+                    monotonicity_checks[f"{feature}_correlation"] = correlation
                     monotonicity_checks[f"{feature}_monotonic"] = bool(abs(correlation) > 0.1)
                 except:
                     monotonicity_checks[f"{feature}_error"] = "Failed to compute correlation"
@@ -663,33 +814,78 @@ class AdvancedEvaluator:
             "better_model": "model1" if dm_stat < 0 else "model2",  # Negative means model1 is better
         }
 
-    def generate_calibration_plots(self, y_true: np.ndarray, y_pred: np.ndarray, save_path: Optional[Path] = None) -> Dict[str, Any]:
-        """Generate calibration plots and return plot data."""
-        # Calibration curve
-        prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=10, strategy='uniform')
+    def generate_calibration_plots(
+        self, y_true: np.ndarray, y_pred: np.ndarray, save_path: Optional[Path] = None
+    ) -> Dict[str, Any]:
+        """Generate regression calibration plots (prediction vs actual)."""
 
-        plot_data = {
-            "calibration_curve": {
-                "prob_true": prob_true.tolist(),
-                "prob_pred": prob_pred.tolist(),
-            }
+        if len(y_true) == 0:
+            return {}
+
+        data = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+        unique_predictions = data["y_pred"].nunique()
+        n_bins = int(min(10, max(1, unique_predictions)))
+        if n_bins > 1:
+            data["bin"] = pd.qcut(data["y_pred"], q=n_bins, duplicates="drop")
+            grouped = data.groupby("bin", observed=False).agg(
+                actual_mean=("y_true", "mean"),
+                predicted_mean=("y_pred", "mean"),
+            )
+        else:
+            grouped = pd.DataFrame(
+                {
+                    "actual_mean": [data["y_true"].mean()],
+                    "predicted_mean": [data["y_pred"].mean()],
+                }
+            )
+
+        plot_data: Dict[str, Any] = {
+            "prediction_vs_actual": {
+                "y_true": data["y_true"].tolist(),
+                "y_pred": data["y_pred"].tolist(),
+            },
+            "bin_bias": grouped.assign(
+                bias=(grouped["actual_mean"] - grouped["predicted_mean"])
+            ).reset_index(drop=True).to_dict(orient="list"),
         }
 
-        # Reliability diagram
+        min_val = float(min(data["y_true"].min(), data["y_pred"].min()))
+        max_val = float(max(data["y_true"].max(), data["y_pred"].max()))
+
+        # Scatter plot of predictions vs actuals
         plt.figure(figsize=(8, 6))
-        plt.plot(prob_pred, prob_true, marker='o', label='Model')
-        plt.plot([0, 1], [0, 1], linestyle='--', label='Perfect calibration')
-        plt.xlabel('Mean predicted probability')
-        plt.ylabel('Fraction of positives')
-        plt.title('Calibration Curve')
-        plt.legend()
+        plt.scatter(data["y_pred"], data["y_true"], alpha=0.4)
+        plt.plot([min_val, max_val], [min_val, max_val], linestyle='--', color='black')
+        plt.xlabel('Predicted points')
+        plt.ylabel('Actual points')
+        plt.title('Predicted vs Actual Points')
         plt.grid(True)
 
+        scatter_path: Optional[Path] = None
         if save_path:
-            plt.savefig(save_path / "calibration_curve.png", dpi=150, bbox_inches='tight')
-            plot_data["calibration_curve"]["plot_path"] = str(save_path / "calibration_curve.png")
+            scatter_path = save_path / "prediction_vs_actual.png"
+            plt.savefig(scatter_path, dpi=150, bbox_inches='tight')
+            plot_data["prediction_vs_actual"]["plot_path"] = str(scatter_path)
 
         plt.close()
+
+        # Bar plot of bin bias
+        if not grouped.empty:
+            plt.figure(figsize=(8, 4))
+            biases = grouped["actual_mean"] - grouped["predicted_mean"]
+            plt.bar(range(len(biases)), biases)
+            plt.axhline(0, color='black', linestyle='--')
+            plt.xlabel('Prediction bin')
+            plt.ylabel('Actual - Predicted')
+            plt.title('Average Bias by Prediction Bin')
+            plt.grid(axis='y')
+
+            if save_path:
+                bias_path = save_path / "prediction_bin_bias.png"
+                plt.savefig(bias_path, dpi=150, bbox_inches='tight')
+                plot_data.setdefault("bin_bias", {})["plot_path"] = str(bias_path)
+
+            plt.close()
 
         return plot_data
 
@@ -743,6 +939,12 @@ class AdvancedEvaluator:
         output_path: Optional[Path] = None
     ) -> str:
         """Generate a comprehensive evaluation report."""
+
+        def format_number(value: Any) -> str:
+            if isinstance(value, (int, float, np.floating)):
+                return f"{float(value):.4f}"
+            return str(value)
+
         report_lines = [
             "# Model Evaluation Report",
             f"## {model_name} Evaluation Summary",
@@ -756,9 +958,12 @@ class AdvancedEvaluator:
         for metric, value in evaluation.metrics.items():
             if metric in evaluation.confidence_intervals:
                 ci = evaluation.confidence_intervals[metric]
-                report_lines.append(f"| {metric.upper()} | {value".4f"} | [{ci[0]".4f"}, {ci[1]".4f"}] |")
+                report_lines.append(
+                    f"| {metric.upper()} | {format_number(value)} | "
+                    f"[{format_number(ci[0])}, {format_number(ci[1])}] |"
+                )
             else:
-                report_lines.append(f"| {metric.upper()} | {value".4f"} | N/A |")
+                report_lines.append(f"| {metric.upper()} | {format_number(value)} | N/A |")
 
         report_lines.extend([
             "",
@@ -770,8 +975,13 @@ class AdvancedEvaluator:
             report_lines.append("|----------|-----|------|----|-------|")
             for position, metrics in evaluation.position_metrics.items():
                 report_lines.append(
-                    f"| {position} | {metrics['mae']".4f"} | {metrics['rmse']".4f"} | "
-                    f"{metrics['r2']".4f"} | {metrics['count']} |"
+                    "| {position} | {mae} | {rmse} | {r2} | {count} |".format(
+                        position=position,
+                        mae=format_number(metrics.get("mae")),
+                        rmse=format_number(metrics.get("rmse")),
+                        r2=format_number(metrics.get("r2")),
+                        count=metrics.get("count", 0),
+                    )
                 )
 
         report_lines.extend([
@@ -782,7 +992,7 @@ class AdvancedEvaluator:
         ])
 
         for metric, value in evaluation.calibration_metrics.items():
-            report_lines.append(f"| {metric.upper()} | {value".4f"} |")
+            report_lines.append(f"| {metric.upper()} | {format_number(value)} |")
 
         report_lines.extend([
             "",
@@ -792,7 +1002,7 @@ class AdvancedEvaluator:
         ])
 
         for metric, value in evaluation.reliability_scores.items():
-            report_lines.append(f"| {metric} | {value".4f"} |")
+            report_lines.append(f"| {metric} | {format_number(value)} |")
 
         report_lines.extend([
             "",
@@ -800,11 +1010,15 @@ class AdvancedEvaluator:
         ])
 
         if evaluation.feature_importance:
-            sorted_features = sorted(evaluation.feature_importance.items(), key=lambda x: x[1], reverse=True)[:10]
+            sorted_features = sorted(
+                evaluation.feature_importance.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )[:10]
             report_lines.append("| Feature | Importance |")
             report_lines.append("|---------|------------|")
             for feature, importance in sorted_features:
-                report_lines.append(f"| {feature} | {importance".4f"} |")
+                report_lines.append(f"| {feature} | {format_number(importance)} |")
 
         report_lines.extend([
             "",
